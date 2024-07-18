@@ -1,0 +1,4 @@
+BASE_URL=""
+#VIDEO_PLAYER="mpv" #default
+#FUZZY_FINDER="fzy" #default
+#M3U_FILE="/tmp/ep_list.m3u # default
