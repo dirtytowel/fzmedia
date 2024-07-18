@@ -8,7 +8,9 @@ All it does is pass the file dirs (if they have a very specific file tree) to a 
 `${HTTP_INDEX} -> ${FUZZY_FINDER} -> ${VIDEO_PLAYER}`
 
 HTTP_INDEX: currently only works with my own private index. no default, needs to be set in config file
+
 FUZZY_FINDER: confirmed working with `dmenu`, `fzy`, and `fzf`. defaults to `fzy`
+
 VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vlc to work
 
 # TODO
