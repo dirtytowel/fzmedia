@@ -11,7 +11,7 @@ HTTP_INDEX: currently only works with my own private index. no default, needs to
 
 FUZZY_FINDER: confirmed working with `dmenu`, `fzy`, and `fzf`. defaults to `fzy`
 
-VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vlc to work
+VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vlc to work. defaults to `mpv`
 
 # TODO
 - Work with any http index, not just my own
