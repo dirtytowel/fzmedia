@@ -14,6 +14,7 @@ FUZZY_FINDER: confirmed working with `dmenu`, `fzy`, and `fzf`. defaults to `fzy
 VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vlc to work. defaults to `mpv`
 
 # TODO
+I am a devops engineer so ofc I am going to overengineer the ci/cd for a stupid little shell script
 - gentoo ebuild
 - selfhosted apt repository for debian and ubuntu
 - manually overide variables with a flag
