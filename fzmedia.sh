@@ -1,5 +1,21 @@
 #!/bin/sh
-. ~/.config/fzmedia/config
+
+if [ "`id -u`" -eq 0 ]; then \
+	echo "Do not run this script as root. Aborting."; \
+	exit 1; \
+fi
+
+CONFIG_FILE_PATH="$HOME/.config/fzmedia/"
+if [ ! -f "$CONFIG_FILE_PATH/config" ]; then
+	echo "File $CONFIG_FILE_PATH not found. Creating from template..."
+	mkdir -p $CONFIG_FILE_PATH
+	echo "BASE_URL=\"\"
+#VIDEO_PLAYER=\"mpv\" #default
+#FUZZY_FINDER=\"fzy\" #default
+#M3U_FILE=\"/tmp/ep_list.m3u\" #default" > $CONFIG_FILE_PATH/config
+fi
+
+. $CONFIG_FILE_PATH/config
 [ -z "${BASE_URL}" ] && echo "Error: BASE_URL is not set. Please set it in the configuration file at $HOME/.config/fzmedia/config" && exit 1
 
 # defaults
