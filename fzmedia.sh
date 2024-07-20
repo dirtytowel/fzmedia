@@ -34,7 +34,7 @@ indexfzy () {
 }
 
 plbuild () {
-  ESCAPED_EP=$(printf '%s\n' "$EPISODE" | sed 's/[\/&]/\\&/g')
+  ENCODED_EP=$(printf '%s\n' "$EPISODE" | python3 -c "import sys, urllib.parse as ul; print('\n'.join(ul.quote(ul.unquote(line.strip()), safe='/') for line in sys.stdin))")
   echo "#EXTM3U" > "$M3U_FILE"
   URL_PATH=${1#$BASE_URL/}
   for i in $(wget -q -O - "$1" | grep -oP '(?<=href=")[^"]*' | grep mkv)
@@ -43,6 +43,7 @@ plbuild () {
     ENCODED=$(echo "$URL_PATH$i" | python3 -c "import sys, urllib.parse as ul; print('\n'.join(ul.quote(ul.unquote(line.strip()), safe='/') for line in sys.stdin))")
     echo $BASE_URL/$ENCODED >> "$M3U_FILE"
   done
+  sed "0,/$ENCODED_EP/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
 main () {
