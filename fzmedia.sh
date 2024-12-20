@@ -46,46 +46,41 @@ plbuild () {
   sed "0,/$ENCODED_EP/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
+navigate_and_play () {
+  local current_path="$1"
+  while :; do
+    # Present a fuzzy selection of directories or media files
+    selection=$(indexfzy "$current_path/")
+    [ -z "$selection" ] && exit
+    new_path="$current_path/$selection"
+
+    # Check if there are media files (video or music) in the directory
+    media_files=$(wget -q -O - "$new_path/" \
+      | grep -oP '(?<=href=")[^"]*' \
+      | grep -iE '\.(mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a)$')
+
+    if [ -n "$media_files" ]; then
+      # If there are media files, let the user select and play/build playlist
+      EPISODE=$(echo "$media_files" | $FUZZY_FINDER)
+      [ -z "$EPISODE" ] && exit
+      plbuild "$new_path"
+      $VIDEO_PLAYER "$M3U_FILE"
+      rm -f "$M3U_FILE"
+      break
+    else
+      # If no media files, navigate deeper into the selected directory
+      current_path="$new_path"
+    fi
+  done
+}
+
 main () {
   sourceconf
 
-  LIBRARY="$(echo "movies\ntv\nanime" | $FUZZY_FINDER)"
+  LIBRARY=$(indexfzy "$BASE_URL")
   [ -z "$LIBRARY" ] && exit 
 
-  case $LIBRARY in
-
-    movies)
-      DIR=$(indexfzy $BASE_URL/$LIBRARY/)
-      [ -z "$DIR" ] && exit
-      VIDEO_PATH="$BASE_URL/$LIBRARY/$DIR/$(wget -q -O - "$BASE_URL/$LIBRARY/$DIR" | grep -oP '(?<=href=")[^"]*' | grep mkv)"
-      $VIDEO_PLAYER "$VIDEO_PATH"
-    ;;
-    
-    tv | anime)
-      SHOW=$(indexfzy "$BASE_URL/$LIBRARY/" | tr -d '\n' | sed 's/.$//')
-      [ -z "$SHOW" ] && exit
-      wget -q -O - "$BASE_URL/$LIBRARY/$SHOW/" | grep -oP '(?<=href=")[^"]*' | grep -q mkv
-      if [ $? = 0 ]; then
-        #ONLY ONE SEASON
-        EPISODE=$(indexfzy "$BASE_URL/$LIBRARY/$SHOW/" | tr -d '\n' | grep mkv)
-        [ -z "$EPISODE" ] && exit
-        plbuild "$BASE_URL/$LIBRARY/$SHOW/"
-        $VIDEO_PLAYER $M3U_FILE
-        rm -rf $M3U_FILE
-      else
-        #MULTIPLE SEASONS
-        SEASON=$(indexfzy "$BASE_URL/$LIBRARY/$SHOW/" | tr -d '\n')
-        [ -z "$SEASON" ] && exit
-        EPISODE=$(indexfzy "$BASE_URL/$LIBRARY/$SHOW/$SEASON" | tr -d '\n' | grep mkv)
-        [ -z "$EPISODE" ] && exit
-        plbuild "$BASE_URL/$LIBRARY/$SHOW/$SEASON"
-        $VIDEO_PLAYER $M3U_FILE
-        rm -rf $M3U_FILE
-      fi
-    ;;
-
-  esac
-
+  navigate_and_play "$BASE_URL/$LIBRARY"
 }
 
 main
