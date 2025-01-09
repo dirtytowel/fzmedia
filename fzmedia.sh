@@ -1,17 +1,11 @@
 #!/bin/sh
 
-# disallow root
-if [ "`id -u`" -eq 0 ]; then \
-	echo "Do not run this script as root. Aborting."; \
-	exit 1; \
-fi
-
-# defaults
-: "${VIDEO_PLAYER:=mpv}"
-: "${FUZZY_FINDER:=fzy}"
-: "${M3U_FILE:=/tmp/filelist.m3u}"
-
 sourceconf () {
+  # defaults
+  : "${VIDEO_PLAYER:=mpv}"
+  : "${FUZZY_FINDER:=fzy}"
+  : "${M3U_FILE:=/tmp/filelist.m3u}"
+
   CONFIG_FILE_PATH="$HOME/.config/fzmedia/"
   if [ ! -f "$CONFIG_FILE_PATH/config" ]; then
     echo "File $CONFIG_FILE_PATH not found. Creating from template..."
@@ -25,6 +19,7 @@ sourceconf () {
   [ -z "${BASE_URL}" ] && echo "Error: BASE_URL is not set. Please set it in the configuration file at $HOME/.config/fzmedia/config" && exit 1
 }
 
+
 indexfzy () {
   wget -q -O - "$1" \
     | grep -oP '(?<=href=")[^"]*' \
@@ -32,6 +27,7 @@ indexfzy () {
     | python3 -c "import sys, urllib.parse as ul; print('\n'.join(ul.unquote_plus(line.strip()) for line in sys.stdin))" \
     | $FUZZY_FINDER
 }
+
 
 plbuild () {
   ENCODED_EP=$(printf '%s\n' "$EPISODE" | python3 -c "import sys, urllib.parse as ul; print('\n'.join(ul.quote(ul.unquote(line.strip()), safe='/') for line in sys.stdin))")
@@ -45,6 +41,7 @@ plbuild () {
   done
   sed "0,/$ENCODED_EP/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
+
 
 navigate_and_play () {
   local current_path="$1"
@@ -74,7 +71,14 @@ navigate_and_play () {
   done
 }
 
+
 main () {
+  # disallow root
+  if [ "`id -u`" -eq 0 ]; then \
+  	echo "Do not run this script as root. Aborting."; \
+  	exit 1; \
+  fi
+
   sourceconf
 
   LIBRARY=$(indexfzy "$BASE_URL")
