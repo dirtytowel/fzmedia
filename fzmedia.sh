@@ -17,9 +17,9 @@ sourceconf () {
     echo "File $CONFIG_FILE_PATH not found. Creating from template..."
     mkdir -p $CONFIG_FILE_PATH
     echo "BASE_URL=\"\"
-  #VIDEO_PLAYER=\"mpv\" #default
-  #FUZZY_FINDER=\"fzy\" #default
-  #M3U_FILE=\"/tmp/ep_list.m3u\" #default" > $CONFIG_FILE_PATH/config
+#VIDEO_PLAYER=\"mpv\" #default
+#FUZZY_FINDER=\"fzy\" #default
+#M3U_FILE=\"/tmp/ep_list.m3u\" #default" > $CONFIG_FILE_PATH/config
   fi
   . $CONFIG_FILE_PATH/config
   [ -z "${BASE_URL}" ] && echo "Error: BASE_URL is not set. Please set it in the configuration file at $HOME/.config/fzmedia/config" && exit 1
@@ -49,8 +49,8 @@ plbuild () {
 main () {
   sourceconf
 
-  LIBRARY="$(echo "movies\ntv\nanime" | $FUZZY_FINDER)"
-  [ -z "$LIBRARY" ] && exit 
+  LIBRARY="$(echo -e "movies\ntv\nanime" | $FUZZY_FINDER)"
+  [ -z "$LIBRARY" ] && exit
 
   case $LIBRARY in
 
@@ -60,7 +60,7 @@ main () {
       VIDEO_PATH="$BASE_URL/$LIBRARY/$DIR/$(wget -q -O - "$BASE_URL/$LIBRARY/$DIR" | grep -oP '(?<=href=")[^"]*' | grep mkv)"
       $VIDEO_PLAYER "$VIDEO_PATH"
     ;;
-    
+
     tv | anime)
       SHOW=$(indexfzy "$BASE_URL/$LIBRARY/" | tr -d '\n' | sed 's/.$//')
       [ -z "$SHOW" ] && exit
