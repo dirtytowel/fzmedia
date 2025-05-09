@@ -44,6 +44,10 @@ indexfzy () {
     | $FUZZY_FINDER
 }
 
+# supported media extensions
+MEDIA_EXT='mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a'
+MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
+
 # Build an M3U playlist from a URL directory, starting from selected episode
 plbuild() {
   # URL‐encode the chosen episode name
@@ -60,7 +64,7 @@ plbuild() {
   # Loop over all .mkv files in the directory listing
   for i in $(wget -q -O - "$1" \
       | grep -oP '(?<=href=")[^"]*' \
-      | grep -iE '\.(mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a)$')
+      | grep -iE "$MEDIA_REGEX")
   do
     echo "#EXTINF:-1," >> "$M3U_FILE"      # add a new playlist entry
     # URL‐encode each file name
@@ -88,7 +92,7 @@ navigate_and_play() {
     # Fetch raw hrefs of video/audio files in this directory
     raw=$(wget -qO- "$current/" \
       | grep -oP '(?<=href=")[^"]*' \
-      | grep -iE '\.(mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a)$')
+      | grep -iE "$MEDIA_REGEX")
 
     if [ -n "$raw" ]; then
       # Decode filenames and pick one via fuzzy finder
