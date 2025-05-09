@@ -79,7 +79,7 @@ indexfzy () {
   wget -q -O - "$1" \
     | grep -oP '(?<=href=")[^"]*' \
     | sed '1d' \
-    | python3 -c "import sys, urllib.parse as ul; print('\n'.join(ul.unquote_plus(line.strip()) for line in sys.stdin))" \
+    | url_decode \
     | $FUZZY_FINDER
 }
 
@@ -116,22 +116,37 @@ plbuild() {
 
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
-  # ensure $current has exactly one trailing slash
   local current="${1%/}/"
   local choice
 
   while :; do
-    # list and pick an entry (dirs end in '/', files do not)
-    choice=$(indexfzy "$current") || exit
+    choice=$(
+      {
+        # Parent‐dir entry only if not at the root BASE_URL
+        if [ "${current%/}" != "${BASE_URL%/}" ]; then
+          printf '%s\n' "../"
+        fi
+
+        # List real entries (dirs end in '/', files don't)
+        wget -q -O - "$current" \
+          | grep -oP '(?<=href=")[^"]*' \
+          | sed '1d' \
+          | url_decode
+      } | $FUZZY_FINDER
+    ) || exit
     [ -z "$choice" ] && exit
 
     case "$choice" in
+      ../)
+        # Strip trailing slash, drop last segment, re‐append slash
+        current="${current%/*/}/"
+        ;;
       */)
-        # it’s a directory — descend into it
+        # Descend into directory
         current="${current}${choice}"
         ;;
       *)
-        # it’s not a directory; if it’s a media file, play it
+        # If it’s a media file, build playlist & play
         if printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
@@ -139,7 +154,6 @@ navigate_and_play() {
           rm -f "$M3U_FILE"
           break
         else
-          # neither dir nor media — skip and re-prompt
           echo "Skipping non-media: $choice" >&2
         fi
         ;;
