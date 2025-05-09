@@ -116,32 +116,34 @@ plbuild() {
 
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
-  local current="$1"
+  # ensure $current has exactly one trailing slash
+  local current="${1%/}/"
+  local choice
 
   while :; do
-    # Choose next directory entry
+    # list and pick an entry (dirs end in '/', files do not)
     choice=$(indexfzy "$current") || exit
     [ -z "$choice" ] && exit
-    current="$current$choice"
 
-    # Fetch raw hrefs of video/audio files in this directory
-    raw=$(wget -qO- "$current" \
-      | grep -oP '(?<=href=")[^"]*' \
-      | grep -iE "$MEDIA_REGEX")
-
-    if [ -n "$raw" ]; then
-      # Decode filenames and pick one via fuzzy finder
-      decoded=$(printf '%s\n' "$raw" | url_decode)
-      FILE=$(printf '%s\n' "$decoded" | $FUZZY_FINDER) || exit
-      [ -z "$FILE" ] && exit
-
-      # Build playlist starting from chosen episode and play
-      plbuild "$current"
-      $VIDEO_PLAYER "$M3U_FILE"
-      rm -f "$M3U_FILE"
-      break
-    fi
-    # Otherwise, descend into the next directory
+    case "$choice" in
+      */)
+        # it’s a directory — descend into it
+        current="${current}${choice}"
+        ;;
+      *)
+        # it’s not a directory; if it’s a media file, play it
+        if printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
+          FILE="$choice"
+          plbuild "$current"
+          "$VIDEO_PLAYER" "$M3U_FILE"
+          rm -f "$M3U_FILE"
+          break
+        else
+          # neither dir nor media — skip and re-prompt
+          echo "Skipping non-media: $choice" >&2
+        fi
+        ;;
+    esac
   done
 }
 
@@ -164,12 +166,9 @@ main() {
   # now BASE_URL must exist
   [ -z "$BASE_URL" ] && echo "Error: BASE_URL must be set." >&2 && exit 1
 
-  # Top‐level fuzzy pick of library categories
-  LIBRARY=$(indexfzy "$BASE_URL")
-  [ -z "$LIBRARY" ] && exit
-
   # Start navigation/playback
-  navigate_and_play "$BASE_URL/$LIBRARY"
+  navigate_and_play "${BASE_URL%/}/"
+
 }
 
 main
