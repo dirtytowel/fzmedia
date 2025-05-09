@@ -60,7 +60,7 @@ plbuild() {
   # Loop over all .mkv files in the directory listing
   for i in $(wget -q -O - "$1" \
       | grep -oP '(?<=href=")[^"]*' \
-      | grep mkv)
+      | grep -iE '\.(mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a)$')
   do
     echo "#EXTINF:-1," >> "$M3U_FILE"      # add a new playlist entry
     # URL‐encode each file name
