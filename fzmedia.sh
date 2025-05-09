@@ -1,5 +1,29 @@
 #!/bin/sh
 
+# Parse CLI flags (override config)
+while getopts "u:p:f:m:h" opt; do
+  case "$opt" in
+    u) FLAG_BASE_URL=$OPTARG ;;
+    p) FLAG_VIDEO_PLAYER=$OPTARG ;;
+    f) FLAG_FUZZY_FINDER=$OPTARG ;;
+    m) FLAG_M3U_FILE=$OPTARG ;;
+    h)
+      cat <<EOF
+Usage: $(basename "$0") [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
+
+  -u  HTTP index root (overrides BASE_URL in config)
+  -p  video player command   (overrides VIDEO_PLAYER)
+  -f  fuzzy-finder command   (overrides FUZZY_FINDER)
+  -m  path to m3u file       (overrides M3U_FILE)
+  -h  this help
+EOF
+      exit 0
+      ;;
+    *) exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
 # Load configuration, apply defaults, and ensure BASE_URL is set
 sourceconf() {
   local config_dir="$HOME/.config/fzmedia"
@@ -27,12 +51,6 @@ EOF
   # Source user config (override defaults)
   # shellcheck disable=SC1090
   . "$config_file"
-
-  # Abort if BASE_URL is not configured
-  if [ -z "$BASE_URL" ]; then
-    printf 'Error: BASE_URL is not set in %s\n' "$config_file" >&2
-    exit 1
-  fi
 }
 
 
@@ -136,6 +154,15 @@ main() {
   fi
 
   sourceconf  # load config
+
+  # Apply CLI overrides
+  [ -n "$FLAG_BASE_URL" ]    && BASE_URL=$FLAG_BASE_URL
+  [ -n "$FLAG_VIDEO_PLAYER" ] && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
+  [ -n "$FLAG_FUZZY_FINDER" ] && FUZZY_FINDER=$FLAG_FUZZY_FINDER
+  [ -n "$FLAG_M3U_FILE" ]     && M3U_FILE=$FLAG_M3U_FILE
+
+  # now BASE_URL must exist
+  [ -z "$BASE_URL" ] && echo "Error: BASE_URL must be set." >&2 && exit 1
 
   # Top‐level fuzzy pick of library categories
   LIBRARY=$(indexfzy "$BASE_URL")
