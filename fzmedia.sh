@@ -35,6 +35,27 @@ EOF
   fi
 }
 
+
+# URL-encode stdin lines (safe='/')
+url_encode() {
+  python3 -c '
+import sys, urllib.parse as ul
+print("\n".join(
+    ul.quote(ul.unquote(line.strip()), safe="/")
+    for line in sys.stdin
+))'
+}
+
+# URL-decode stdin lines
+url_decode() {
+  python3 -c '
+import sys, urllib.parse as ul
+print("\n".join(
+    ul.unquote_plus(line.strip())
+    for line in sys.stdin
+))'
+}
+
 # List and fuzzy‐select directory entries under a given URL
 indexfzy () {
   wget -q -O - "$1" \
@@ -51,9 +72,7 @@ MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 # Build an M3U playlist from a URL directory, starting from selected episode
 plbuild() {
   # URL‐encode the chosen episode name
-  ENCODED_EP=$(printf '%s\n' "$EPISODE" \
-    | python3 -c "import sys, urllib.parse as ul; \
-        print('\n'.join(ul.quote(ul.unquote(line.strip()), safe='/') for line in sys.stdin))")
+  ENCODED_EP=$(printf '%s\n' "$EPISODE" | url_encode)
 
   # Start playlist file with M3U header
   echo "#EXTM3U" > "$M3U_FILE"
@@ -68,9 +87,7 @@ plbuild() {
   do
     echo "#EXTINF:-1," >> "$M3U_FILE"      # add a new playlist entry
     # URL‐encode each file name
-    ENCODED=$(echo "$URL_PATH$i" \
-      | python3 -c "import sys, urllib.parse as ul; \
-          print('\n'.join(ul.quote(ul.unquote(line.strip()), safe='/') for line in sys.stdin))")
+    ENCODED=$(echo "$URL_PATH$i" | url_encode)
     echo "$BASE_URL/$ENCODED" >> "$M3U_FILE"
   done
 
@@ -96,9 +113,7 @@ navigate_and_play() {
 
     if [ -n "$raw" ]; then
       # Decode filenames and pick one via fuzzy finder
-      decoded=$(printf '%s\n' "$raw" \
-        | python3 -c "import sys,urllib.parse as ul; \
-            print('\n'.join(ul.unquote(l.strip()) for l in sys.stdin))")
+      decoded=$(printf '%s\n' "$raw" | url_decode)
       EPISODE=$(printf '%s\n' "$decoded" | $FUZZY_FINDER) || exit
       [ -z "$EPISODE" ] && exit
 
