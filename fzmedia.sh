@@ -1,24 +1,38 @@
 #!/bin/sh
 
-sourceconf () {
-  # defaults
+sourceconf() {
+  local config_dir="$HOME/.config/fzmedia"
+  local config_file="$config_dir/config"
+
+  # defaults (can be overridden in environment or config file)
   : "${VIDEO_PLAYER:=mpv}"
   : "${FUZZY_FINDER:=fzy}"
   : "${M3U_FILE:=/tmp/filelist.m3u}"
 
-  CONFIG_FILE_PATH="$HOME/.config/fzmedia/"
-  if [ ! -f "$CONFIG_FILE_PATH/config" ]; then
-    echo "File $CONFIG_FILE_PATH not found. Creating from template..."
-    mkdir -p $CONFIG_FILE_PATH
-    echo "BASE_URL=\"\"
-  #VIDEO_PLAYER=\"mpv\" #default
-  #FUZZY_FINDER=\"fzy\" #default
-  #M3U_FILE=\"/tmp/ep_list.m3u\" #default" > $CONFIG_FILE_PATH/config
-  fi
-  . $CONFIG_FILE_PATH/config
-  [ -z "${BASE_URL}" ] && echo "Error: BASE_URL is not set. Please set it in the configuration file at $HOME/.config/fzmedia/config" && exit 1
-}
+  # bootstrap config if missing
+  if [ ! -f "$config_file" ]; then
+    echo "Creating default config at $config_file"
+    mkdir -p "$config_dir"
+    cat >"$config_file" <<'EOF'
+# fzmedia config ── adjust as needed
 
+BASE_URL=""          # http index root (required)
+# VIDEO_PLAYER="mpv"
+# FUZZY_FINDER="fzy"
+# M3U_FILE="/tmp/filelist.m3u"
+EOF
+  fi
+
+  # load user config
+  # shellcheck disable=SC1090
+  . "$config_file"
+
+  # ensure BASE_URL is set
+  if [ -z "$BASE_URL" ]; then
+    printf 'Error: BASE_URL is not set in %s\n' "$config_file" >&2
+    exit 1
+  fi
+}
 
 indexfzy () {
   wget -q -O - "$1" \
