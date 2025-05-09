@@ -96,7 +96,7 @@ plbuild() {
   echo "#EXTM3U" > "$M3U_FILE"
 
   # Strip base URL prefix to get relative path
-  URL_PATH=${1#$BASE_URL/}
+  URL_PATH=${1#$BASE_URL}
 
   # Loop over all .mkv files in the directory listing
   for i in $(wget -q -O - "$1" \
@@ -106,7 +106,7 @@ plbuild() {
     echo "#EXTINF:-1," >> "$M3U_FILE"      # add a new playlist entry
     # URL‐encode each file name
     ENCODED=$(echo "$URL_PATH$i" | url_encode)
-    echo "$BASE_URL/$ENCODED" >> "$M3U_FILE"
+    echo "$BASE_URL$ENCODED" >> "$M3U_FILE"
   done
 
   # Remove entries before the chosen episode
@@ -120,12 +120,12 @@ navigate_and_play() {
 
   while :; do
     # Choose next directory entry
-    choice=$(indexfzy "$current/") || exit
+    choice=$(indexfzy "$current") || exit
     [ -z "$choice" ] && exit
-    current="$current/$choice"
+    current="$current$choice"
 
     # Fetch raw hrefs of video/audio files in this directory
-    raw=$(wget -qO- "$current/" \
+    raw=$(wget -qO- "$current" \
       | grep -oP '(?<=href=")[^"]*' \
       | grep -iE "$MEDIA_REGEX")
 
