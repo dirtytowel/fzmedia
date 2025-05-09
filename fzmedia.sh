@@ -84,7 +84,7 @@ indexfzy () {
 }
 
 # supported media extensions
-MEDIA_EXT='mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a'
+MEDIA_EXT='|mkv|mp4|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a'
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL directory, starting from selected episode
