@@ -33,6 +33,7 @@ sourceconf() {
   : "${VIDEO_PLAYER:=mpv}"        # Video player command
   : "${FUZZY_FINDER:=fzy}"        # Fuzzy‐finder command
   : "${M3U_FILE:=/tmp/filelist.m3u}"  # Playlist file path
+ : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
 
   # If config file doesn’t exist, create a template
   if [ ! -f "$config_file" ]; then
@@ -72,6 +73,20 @@ print("\n".join(
     ul.unquote_plus(line.strip())
     for line in sys.stdin
 ))'
+}
+
+reorder() {
+  awk -v order="$PREFERRED_ORDER" '
+  BEGIN {
+    n = split(order, arr, ",")
+    for (i=1; i<=n; i++) prio[arr[i]] = i
+  }
+  {
+    p = ($0 in prio ? prio[$0] : n+1)
+    print p "\t" $0
+  }' \
+  | sort -k1,1n \
+  | cut -f2
 }
 
 # List and fuzzy‐select directory entries under a given URL
@@ -121,18 +136,13 @@ navigate_and_play() {
 
   while :; do
     choice=$(
-      {
-        # List real entries
-        wget -q -O - "$current" \
-          | grep -oP '(?<=href=")[^"]*' \
-          | sed '1d' \
-          | url_decode
-
-        # Parent-dir entry only if not at root, put at bottom
-        if [ "${current%/}" != "${BASE_URL%/}" ]; then
-          printf '%s\n' "../"
-        fi
-      } | $FUZZY_FINDER
+      wget -q -O - "$current" \
+        | grep -oP '(?<=href=")[^"]*' \
+        | sed '1d' \
+        | url_decode \
+        | reorder \
+        | ( cat; [ "${current%/}" != "${BASE_URL%/}" ] && printf '%s\n' "../" ) \
+        | $FUZZY_FINDER
     ) || exit
     [ -z "$choice" ] && exit
 
