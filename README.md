@@ -18,8 +18,7 @@ VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vl
 # TODO
 I am a devops engineer so ofc I am going to overengineer the ci/cd for a stupid little shell script
 - Get VLC (and other media players) to work
-- Clean up the code
-- go back a dir
+- ensure works with different shells and envs
 - Continue watching feature (remember what you have watched and and pick up where you left off)
 - gentoo ebuild
 - selfhosted apt repository for debian and ubuntu
