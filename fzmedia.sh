@@ -56,35 +56,35 @@ plbuild () {
   sed "0,/$ENCODED_EP/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
-
-navigate_and_play () {
-  local current_path="$1"
+navigate_and_play() {
+  local current="$1"
   while :; do
-    # Present a fuzzy selection of directories or media files
-    selection=$(indexfzy "$current_path/")
-    [ -z "$selection" ] && exit
-    new_path="$current_path/$selection"
+    # pick next entry (decoded by indexfzy)
+    choice=$(indexfzy "$current/") || exit
+    [ -z "$choice" ] && exit
+    current="$current/$choice"
 
-    # Check if there are media files (video or music) in the directory
-    media_files=$(wget -q -O - "$new_path/" \
+    # grab raw hrefs for any video/audio files
+    raw=$(wget -qO- "$current/" \
       | grep -oP '(?<=href=")[^"]*' \
       | grep -iE '\.(mp4|mkv|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a)$')
 
-    if [ -n "$media_files" ]; then
-      # If there are media files, let the user select and play/build playlist
-      EPISODE=$(echo "$media_files" | $FUZZY_FINDER)
+    if [ -n "$raw" ]; then
+      # decode them, fuzzy-pick the episode
+      decoded=$(printf '%s\n' "$raw" | \
+        python3 -c "import sys,urllib.parse as ul; print('\n'.join(ul.unquote(l.strip()) for l in sys.stdin))")
+      EPISODE=$(printf '%s\n' "$decoded" | $FUZZY_FINDER) || exit
       [ -z "$EPISODE" ] && exit
-      plbuild "$new_path"
+
+      # build & play
+      plbuild "$current"
       $VIDEO_PLAYER "$M3U_FILE"
       rm -f "$M3U_FILE"
       break
-    else
-      # If no media files, navigate deeper into the selected directory
-      current_path="$new_path"
     fi
+    # otherwise loop deeper
   done
 }
-
 
 main () {
   # disallow root
