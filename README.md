@@ -17,8 +17,6 @@ VIDEO_PLAYER: currently only works with `mpv` but working on getting at least vl
 I am a devops engineer so ofc I am going to overengineer the ci/cd for a stupid little shell script
 - gentoo ebuild
 - selfhosted apt repository for debian and ubuntu
-- manually overide variables with a flag
-- Work with any http index, not just my own
 - Get VLC (and other media players) to work
 - Clean up the code
 - go back a dir
