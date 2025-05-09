@@ -33,7 +33,7 @@ sourceconf() {
   : "${VIDEO_PLAYER:=mpv}"        # Video player command
   : "${FUZZY_FINDER:=fzy}"        # Fuzzy‐finder command
   : "${M3U_FILE:=/tmp/filelist.m3u}"  # Playlist file path
- : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
+  : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
 
   # If config file doesn’t exist, create a template
   if [ ! -f "$config_file" ]; then
