@@ -122,16 +122,16 @@ navigate_and_play() {
   while :; do
     choice=$(
       {
-        # Parent‐dir entry only if not at the root BASE_URL
-        if [ "${current%/}" != "${BASE_URL%/}" ]; then
-          printf '%s\n' "../"
-        fi
-
-        # List real entries (dirs end in '/', files don't)
+        # List real entries
         wget -q -O - "$current" \
           | grep -oP '(?<=href=")[^"]*' \
           | sed '1d' \
           | url_decode
+
+        # Parent-dir entry only if not at root, put at bottom
+        if [ "${current%/}" != "${BASE_URL%/}" ]; then
+          printf '%s\n' "../"
+        fi
       } | $FUZZY_FINDER
     ) || exit
     [ -z "$choice" ] && exit
