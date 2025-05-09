@@ -72,7 +72,7 @@ MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 # Build an M3U playlist from a URL directory, starting from selected episode
 plbuild() {
   # URL‐encode the chosen episode name
-  ENCODED_EP=$(printf '%s\n' "$EPISODE" | url_encode)
+  ENCODED_FILE=$(printf '%s\n' "$FILE" | url_encode)
 
   # Start playlist file with M3U header
   echo "#EXTM3U" > "$M3U_FILE"
@@ -92,7 +92,7 @@ plbuild() {
   done
 
   # Remove entries before the chosen episode
-  sed "0,/$ENCODED_EP/{//!d;}" "$M3U_FILE" \
+  sed "0,/$ENCODED_FILE/{//!d;}" "$M3U_FILE" \
     > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
@@ -114,8 +114,8 @@ navigate_and_play() {
     if [ -n "$raw" ]; then
       # Decode filenames and pick one via fuzzy finder
       decoded=$(printf '%s\n' "$raw" | url_decode)
-      EPISODE=$(printf '%s\n' "$decoded" | $FUZZY_FINDER) || exit
-      [ -z "$EPISODE" ] && exit
+      FILE=$(printf '%s\n' "$decoded" | $FUZZY_FINDER) || exit
+      [ -z "$FILE" ] && exit
 
       # Build playlist starting from chosen episode and play
       plbuild "$current"
