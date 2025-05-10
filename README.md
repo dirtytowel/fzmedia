@@ -1,4 +1,4 @@
-install with `make install`
+install with `sudo make install`
 
 ebuild and apt repository coming soon tm
 
