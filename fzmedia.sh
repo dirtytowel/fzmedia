@@ -160,7 +160,7 @@ navigate_and_play() {
         if printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
-          "$VIDEO_PLAYER" "$M3U_FILE"
+          $VIDEO_PLAYER "$M3U_FILE"
           rm -f "$M3U_FILE"
           break
         else
