@@ -34,6 +34,7 @@ sourceconf() {
   : "${FUZZY_FINDER:=fzy}"        # Fuzzy‐finder command
   : "${M3U_FILE:=/tmp/fzmedia.m3u}"  # Playlist file path
   : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
+  : "${CACHE_DIR:=$HOME/.cache/fzmedia}"  # where to cache M3U lists
 
   # If config file doesn’t exist, create a template
   if [ ! -f "$config_file" ]; then
@@ -45,13 +46,15 @@ sourceconf() {
 BASE_URL=""          # HTTP index root (required)
 # VIDEO_PLAYER="mpv"
 # FUZZY_FINDER="fzy"
-# M3U_FILE="/tmp/filelist.m3u"
+# M3U_FILE="/tmp/fzmedia.m3u"
+# CACHE_DIR="$HOME/.cache/fzmedia""
 EOF
+
   fi
 
-  # Source user config (override defaults)
-  # shellcheck disable=SC1090
+  mkdir -p "$CACHE_DIR"
   . "$config_file"
+
 }
 
 
@@ -127,6 +130,7 @@ plbuild() {
   # Remove entries before the chosen episode
   sed "0,/$ENCODED_FILE/{//!d;}" "$M3U_FILE" \
     > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
+
 }
 
 # Navigate directories via fuzzy picker and play when reaching media files
@@ -161,6 +165,7 @@ navigate_and_play() {
           FILE="$choice"
           plbuild "$current"
           $VIDEO_PLAYER "$M3U_FILE"
+          cp "$M3U_FILE" "$CACHE_DIR/${choice%.*}.m3u"
           rm -f "$M3U_FILE"
           break
         else
