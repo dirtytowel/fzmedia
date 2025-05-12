@@ -32,7 +32,7 @@ sourceconf() {
   # Default settings (can be overridden by environment or config file)
   : "${VIDEO_PLAYER:=mpv}"        # Video player command
   : "${FUZZY_FINDER:=fzy}"        # Fuzzy‐finder command
-  : "${M3U_FILE:=/tmp/filelist.m3u}"  # Playlist file path
+  : "${M3U_FILE:=/tmp/fzmedia.m3u}"  # Playlist file path
   : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
 
   # If config file doesn’t exist, create a template
