@@ -11,7 +11,7 @@ while getopts "u:p:f:m:h" opt; do
       cat <<EOF
 Usage: $(basename "$0") [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
 
-  -u  HTTP index root (overrides BASE_URL in config)
+  -u  HTTP index root        (overrides BASE_URL in config)
   -p  video player command   (overrides VIDEO_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
   -m  path to m3u file       (overrides M3U_FILE)
@@ -26,34 +26,46 @@ shift $((OPTIND - 1))
 
 # Load configuration, apply defaults, and ensure BASE_URL is set
 sourceconf() {
-  local config_dir="$HOME/.config/fzmedia"
+  local config_dir="$XDG_CONFIG_HOME/fzmedia"
   local config_file="$config_dir/config"
 
-  # Default settings (can be overridden by environment or config file)
-  : "${VIDEO_PLAYER:=mpv}"        # Video player command
-  : "${FUZZY_FINDER:=fzy}"        # Fuzzy‐finder command
-  : "${M3U_FILE:=/tmp/fzmedia.m3u}"  # Playlist file path
-  : "${PREFERRED_ORDER:=movies/,tv/,anime/,music/}"
-  : "${CACHE_DIR:=$HOME/.cache/fzmedia}"  # where to cache M3U lists
+  # Ensure the config directory exists and create the file if it doesn't
+  mkdir -p "$config_dir"
+  touch "$config_file"
+  . "$config_file"
 
-  # If config file doesn’t exist, create a template
-  if [ ! -f "$config_file" ]; then
-    echo "Creating default config at $config_file"
-    mkdir -p "$config_dir"
-    cat >"$config_file" <<'EOF'
-# fzmedia config ── adjust as needed
+  # Define all VAR=default pairs once
+  set -- \
+    "BASE_URL=" \
+    "VIDEO_PLAYER=mpv" \
+    "FUZZY_FINDER=fzy" \
+    "M3U_FILE=/tmp/fzmedia.m3u" \
+    "PREFERRED_ORDER=movies/,tv/,anime/,music/" \
+    "CACHE_DIR=$HOME/.cache/fzmedia"
 
-BASE_URL=""          # HTTP index root (required)
-# VIDEO_PLAYER="mpv"
-# FUZZY_FINDER="fzy"
-# M3U_FILE="/tmp/fzmedia.m3u"
-# CACHE_DIR="$HOME/.cache/fzmedia""
-EOF
+  # Apply defaults: for each “VAR=default”, do : "${VAR:=default}"
+  for each in "$@"; do
+    eval ": \"\${${each%%=*}:=${each#*=}}\""
+  done
 
+  # If BASE_URL is still empty after sourcing/applying defaults, error out
+  if [ -z "$BASE_URL" ]; then
+    echo "Error: BASE_URL is not set in $config_file" >&2
+    return 1
   fi
 
+  # Ensure the cache directory exists now that CACHE_DIR is set
   mkdir -p "$CACHE_DIR"
-  . "$config_file"
+
+  # Append any missing VAR lines (commented or not) to the end of the config file
+  for each in "$@"; do
+    var=${each%%=*}
+    eval "val=\$$var"
+    # Check for any line that sets VAR, commented or not
+    if ! grep -q -E "^[[:space:]]*#?[[:space:]]*$var=" "$config_file"; then
+      printf '# %s="%s" #default\n' "$var" "$val" >> "$config_file"
+    fi
+  done
 
 }
 
@@ -192,8 +204,8 @@ main() {
   [ -n "$FLAG_FUZZY_FINDER" ] && FUZZY_FINDER=$FLAG_FUZZY_FINDER
   [ -n "$FLAG_M3U_FILE" ]     && M3U_FILE=$FLAG_M3U_FILE
 
-  # now BASE_URL must exist
-  [ -z "$BASE_URL" ] && echo "Error: BASE_URL must be set." >&2 && exit 1
+  # If BASE_URL is still empty after sourcing/applying defaults, error out
+  [ -z "$BASE_URL" ] && echo "Error: BASE_URL must be set." >&2 && return 1
 
   # Start navigation/playback
   navigate_and_play "${BASE_URL%/}/"
