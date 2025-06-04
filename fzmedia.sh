@@ -26,7 +26,9 @@ shift $((OPTIND - 1))
 
 # Load configuration, apply defaults, and ensure BASE_URL is set
 sourceconf() {
-  local config_dir="$XDG_CONFIG_HOME/fzmedia"
+  [ -z $XDG_CONFIG_HOME ] && local config_home="$HOME/.config" || config_home="$XDG_CONFIG_HOME"
+  [ -z $XDG_CACHE_HOME ] && local cache_home="$HOME/.cache" || cache_home="$XDG_CACHE_HOME"
+  local config_dir="$config_home/fzmedia"
   local config_file="$config_dir/config"
 
   # Ensure the config directory exists and create the file if it doesn't
@@ -41,7 +43,7 @@ sourceconf() {
     "FUZZY_FINDER=fzy" \
     "M3U_FILE=/tmp/fzmedia.m3u" \
     "PREFERRED_ORDER=movies/,tv/,anime/,music/" \
-    "CACHE_DIR=$XDG_CACHE_HOME/fzmedia"
+    "CACHE_DIR=$cache_home/fzmedia"
 
   # Apply defaults: for each “VAR=default”, do : "${VAR:=default}"
   for each in "$@"; do eval ": \"\${${each%%=*}:=${each#*=}}\""; done
