@@ -41,18 +41,10 @@ sourceconf() {
     "FUZZY_FINDER=fzy" \
     "M3U_FILE=/tmp/fzmedia.m3u" \
     "PREFERRED_ORDER=movies/,tv/,anime/,music/" \
-    "CACHE_DIR=$HOME/.cache/fzmedia"
+    "CACHE_DIR=$XDG_CACHE_HOME/fzmedia"
 
   # Apply defaults: for each “VAR=default”, do : "${VAR:=default}"
-  for each in "$@"; do
-    eval ": \"\${${each%%=*}:=${each#*=}}\""
-  done
-
-  # If BASE_URL is still empty after sourcing/applying defaults, error out
-  if [ -z "$BASE_URL" ]; then
-    echo "Error: BASE_URL is not set in $config_file" >&2
-    return 1
-  fi
+  for each in "$@"; do eval ": \"\${${each%%=*}:=${each#*=}}\""; done
 
   # Ensure the cache directory exists now that CACHE_DIR is set
   mkdir -p "$CACHE_DIR"
