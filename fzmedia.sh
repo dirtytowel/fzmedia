@@ -36,7 +36,7 @@ sourceconf() {
 
   # Define all VAR=default pairs once
   set -- \
-    "BASE_URL=" \
+    "BASE_URL=/path/to/file or http://example.com" \
     "VIDEO_PLAYER=mpv" \
     "FUZZY_FINDER=fzy" \
     "M3U_FILE=/tmp/fzmedia.m3u" \
