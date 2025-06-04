@@ -96,45 +96,57 @@ reorder() {
   | cut -f2
 }
 
-# List and fuzzy‐select directory entries under a given URL
-indexfzy () {
-  wget -q -O - "$1" \
-    | grep -oP '(?<=href=")[^"]*' \
-    | sed '1d' \
-    | url_decode \
-    | $FUZZY_FINDER
+list_entries() {
+  case "$1" in
+    http://*|https://*)
+      wget -q -O - "$1" \
+        | grep -oP '(?<=href=")[^"]*' \
+        | sed '1d' \
+        | url_decode
+      ;;
+    *)
+      # assume $1 is a directory on disk (with or without trailing slash)
+      dir="${1%/}"
+      ( cd "$dir" 2>/dev/null && ls -1p )
+      ;;
+  esac
 }
 
+# List and fuzzy‐select directory entries under a given URL
+indexfzy() {
+  list_entries "$1" | $FUZZY_FINDER
+}
 # supported media extensions
 MEDIA_EXT='|mkv|mp4|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a'
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
-# Build an M3U playlist from a URL directory, starting from selected episode
+# Build an M3U playlist from a URL/directory, starting from first selected file
 plbuild() {
-  # URL‐encode the chosen episode name
-  ENCODED_FILE=$(printf '%s\n' "$FILE" | url_encode)
-
-  # Start playlist file with M3U header
   echo "#EXTM3U" > "$M3U_FILE"
 
-  # Strip base URL prefix to get relative path
-  URL_PATH=${1#$BASE_URL}
+  list_entries "$1" \
+    | grep -iE "$MEDIA_REGEX" \
+    | while IFS= read -r file; do
+        printf '#EXTINF:-1,\n' >> "$M3U_FILE"
+        case "$1" in
+          http://*|https://*)
+            enc=$(printf '%s' "$file" | url_encode)
+            printf '%s%s\n' "$1" "$enc" >> "$M3U_FILE"
+            ;;
+          *)
+            printf '%s%s\n' "$1" "$file" >> "$M3U_FILE"
+            ;;
+        esac
+      done
 
-  # Loop over all .mkv files in the directory listing
-  for i in $(wget -q -O - "$1" \
-      | grep -oP '(?<=href=")[^"]*' \
-      | grep -iE "$MEDIA_REGEX")
-  do
-    echo "#EXTINF:-1," >> "$M3U_FILE"      # add a new playlist entry
-    # URL‐encode each file name
-    ENCODED=$(echo "$URL_PATH$i" | url_encode)
-    echo "$BASE_URL$ENCODED" >> "$M3U_FILE"
-  done
-
-  # Remove entries before the chosen episode
-  sed "0,/$ENCODED_FILE/{//!d;}" "$M3U_FILE" \
-    > "$M3U_FILE.tmp" && mv "$M3U_FILE.tmp" "$M3U_FILE"
-
+  # remove everything before the chosen file
+  if case "$1" in http://*|https://*) true;; *) false;; esac; then
+    pattern=$(printf '%s' "$FILE" | url_encode)
+  else
+    pattern="$FILE"
+  fi
+  sed "0,/$pattern/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" \
+    && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
 # Navigate directories via fuzzy picker and play when reaching media files
@@ -144,14 +156,13 @@ navigate_and_play() {
 
   while :; do
     choice=$(
-      wget -q -O - "$current" \
-        | grep -oP '(?<=href=")[^"]*' \
-        | sed '1d' \
-        | url_decode \
+      list_entries "$current" \
         | reorder \
-        | ( cat; [ "${current%/}" != "${BASE_URL%/}" ] && printf '%s\n' "../" ) \
+        | ( cat; [ "${current%/}" != "${BASE_URL%/}" ] && printf '../\n' ) \
         | $FUZZY_FINDER
     ) || exit
+
+
     [ -z "$choice" ] && exit
 
     case "$choice" in
