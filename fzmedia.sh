@@ -181,17 +181,27 @@ navigate_and_play() {
       {
         [ "${current%/}" = "${BASE_URL%/}" ] \
           && ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 \
-          && printf 'continue watching\n'
+          && printf 'continue watching/\n'
         list_entries "$current" | reorder
         [ "${current%/}" = "${CACHE_DIR%/}" ] && printf 'rm\n'
         [ "${current%/}" != "${BASE_URL%/}" ] && printf '../\n'
       } | $FUZZY_FINDER
-    ) || exit
+    )
+    status=$?
+    if [ "$status" -ne 0 ]; then
+      # fuzzy-finder was cancelled—go up one level (or exit if we're at BASE_URL)
+      if [ "${current%/}" = "${BASE_URL%/}" ]; then
+        exit
+      else
+        current="${current%/*/}/"
+        continue
+      fi
+    fi
 
     [ -z "$choice" ] && exit
 
     case "$choice" in
-      "continue watching")
+      "continue watching/")
         current="${CACHE_DIR%/}/"
         ;;
 
