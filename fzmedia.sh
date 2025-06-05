@@ -1,10 +1,11 @@
 #!/bin/sh
 
 # Parse CLI flags (override config)
-while getopts "u:p:f:m:h" opt; do
+while getopts "u:p:r:f:m:h" opt; do
   case "$opt" in
     u) FLAG_BASE_URL=$OPTARG ;;
     p) FLAG_VIDEO_PLAYER=$OPTARG ;;
+    r) FLAG_RESUME_PLAYER=$OPTARG ;;
     f) FLAG_FUZZY_FINDER=$OPTARG ;;
     m) FLAG_M3U_FILE=$OPTARG ;;
     h)
@@ -13,6 +14,7 @@ Usage: $(basename "$0") [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3
 
   -u  HTTP index root        (overrides BASE_URL in config)
   -p  video player command   (overrides VIDEO_PLAYER)
+  -r  resume player command  (overrides RESUME_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
   -m  path to m3u file       (overrides M3U_FILE)
   -h  this help
@@ -188,10 +190,17 @@ navigate_and_play() {
       } | $FUZZY_FINDER
     )
     status=$?
+
+    # If fuzzy‐finder was cancelled (Esc/Ctrl-C):
+    #  • if at BASE_URL → exit
+    #  • if at CACHE_DIR → current=BASE_URL
+    #  • otherwise → current=parent
     if [ "$status" -ne 0 ]; then
-      # fuzzy-finder was cancelled—go up one level (or exit if we're at BASE_URL)
       if [ "${current%/}" = "${BASE_URL%/}" ]; then
         exit
+      elif [ "${current%/}" = "${CACHE_DIR%/}" ]; then
+        current="${BASE_URL%/}/"
+        continue
       else
         current="${current%/*/}/"
         continue
@@ -252,6 +261,7 @@ main() {
   # Apply CLI overrides
   [ -n "$FLAG_BASE_URL" ]    && BASE_URL=$FLAG_BASE_URL
   [ -n "$FLAG_VIDEO_PLAYER" ] && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
+  [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
   [ -n "$FLAG_FUZZY_FINDER" ] && FUZZY_FINDER=$FLAG_FUZZY_FINDER
   [ -n "$FLAG_M3U_FILE" ]     && M3U_FILE=$FLAG_M3U_FILE
 
