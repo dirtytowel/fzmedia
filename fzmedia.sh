@@ -59,10 +59,10 @@ sourceconf() {
     # only BASE_URL gets a custom trailing comment; everything else uses “#default”
     if ! grep -q -E "^[[:space:]]*#?[[:space:]]*$var=" "$config_file"; then
       if [ "$var" = "BASE_URL" ]; then
-        printf '# %s="%s" #/path/to/file or http://example.com\n' \
+        printf '#%s="%s" #/path/to/file or http://example.com\n' \
           "$var" "$val" >> "$config_file"
       else
-        printf '# %s="%s" #default\n' \
+        printf '#%s="%s" #default\n' \
           "$var" "$val" >> "$config_file"
       fi
     fi
