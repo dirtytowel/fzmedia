@@ -128,7 +128,7 @@ indexfzy() {
   list_entries "$1" | $FUZZY_FINDER
 }
 # supported media extensions
-MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.m4a'
+MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.m4a|.gif'
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
