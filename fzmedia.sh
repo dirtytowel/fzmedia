@@ -126,7 +126,7 @@ indexfzy() {
   list_entries "$1" | $FUZZY_FINDER
 }
 # supported media extensions
-MEDIA_EXT='|mkv|mp4|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a'
+MEDIA_EXT='.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.m4a'
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
@@ -201,7 +201,7 @@ navigate_and_play() {
         [ ! -e "$CACHE_DIR"/*.m3u ] && current="${BASE_URL%/}/" || current="${CACHE_DIR%/}/"
         ;;
       ../)
-        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${BASE_URL%/}" || current="${current%/*/}/"
+        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${BASE_URL%/}/" || current="${current%/*/}/"
         ;;
 
       */)
