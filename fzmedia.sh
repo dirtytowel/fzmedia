@@ -38,8 +38,9 @@ sourceconf() {
 
   # Define all VAR=default pairs once
   set -- \
-    "BASE_URL=/path/to/file or http://example.com" \
-    "VIDEO_PLAYER=mpv" \
+    "BASE_URL=" \
+    "VIDEO_PLAYER=mpv --save-position-on-quit --no-resume-playback" \
+    "RESUME_PLAYER=mpv --save-position-on-quit" \
     "FUZZY_FINDER=fzy" \
     "M3U_FILE=/tmp/fzmedia.m3u" \
     "PREFERRED_ORDER=movies/,tv/,anime/,music/" \
@@ -55,9 +56,15 @@ sourceconf() {
   for each in "$@"; do
     var=${each%%=*}
     eval "val=\$$var"
-    # Check for any line that sets VAR, commented or not
+    # only BASE_URL gets a custom trailing comment; everything else uses “#default”
     if ! grep -q -E "^[[:space:]]*#?[[:space:]]*$var=" "$config_file"; then
-      printf '# %s="%s" #default\n' "$var" "$val" >> "$config_file"
+      if [ "$var" = "BASE_URL" ]; then
+        printf '# %s="%s" #/path/to/file or http://example.com\n' \
+          "$var" "$val" >> "$config_file"
+      else
+        printf '# %s="%s" #default\n' \
+          "$var" "$val" >> "$config_file"
+      fi
     fi
   done
 
@@ -151,6 +158,19 @@ plbuild() {
     && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
+# Prompt via fuzzy finder whether to add to the continue watching cache dir
+cont_watch() {
+  ans=$( printf "continue watching\ndon't add\n" | $FUZZY_FINDER ) || return
+  [ "$ans" = "continue watching" ] && cp "$1" "$CACHE_DIR/${2%.*}.m3u"
+}
+
+manage_cache() {
+  local sel
+  sel=$(find "$CACHE_DIR" -maxdepth 1 -name '*.m3u' -printf '%f\n' 2>/dev/null \
+    | $FUZZY_FINDER) || return
+  [ -n "$sel" ] && rm "$CACHE_DIR/$sel"
+}
+
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
   local current="${1%/}/"
@@ -158,33 +178,49 @@ navigate_and_play() {
 
   while :; do
     choice=$(
-      list_entries "$current" \
-        | reorder \
-        | ( cat; [ "${current%/}" != "${BASE_URL%/}" ] && printf '../\n' ) \
-        | $FUZZY_FINDER
+      {
+        [ "${current%/}" = "${BASE_URL%/}" ] \
+          && ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 \
+          && printf 'continue watching\n'
+        list_entries "$current" | reorder
+        [ "${current%/}" = "${CACHE_DIR%/}" ] && printf 'rm\n'
+        [ "${current%/}" != "${BASE_URL%/}" ] && printf '../\n'
+      } | $FUZZY_FINDER
     ) || exit
-
 
     [ -z "$choice" ] && exit
 
     case "$choice" in
-      ../)
-        # Strip trailing slash, drop last segment, re‐append slash
-        current="${current%/*/}/"
+      "continue watching")
+        current="${CACHE_DIR%/}/"
         ;;
+
+      "rm")
+        manage_cache
+        # if CACHE_DIR is now empty of .m3u, reset to BASE_URL; otherwise stay in CACHE_DIR
+        [ ! -e "$CACHE_DIR"/*.m3u ] && current="${BASE_URL%/}/" || current="${CACHE_DIR%/}/"
+        ;;
+      ../)
+        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${BASE_URL%/}" || current="${current%/*/}/"
+        ;;
+
       */)
-        # Descend into directory
         current="${current}${choice}"
         ;;
+
       *)
-        # If it’s a media file, build playlist & play
-        if printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
+        if printf '%s\n' "$choice" | grep -qiE '\.m3u$'; then
+          $RESUME_PLAYER "${current}${choice}"
+          break
+
+        elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
           $VIDEO_PLAYER "$M3U_FILE"
-          cp "$M3U_FILE" "$CACHE_DIR/${choice%.*}.m3u"
+          cont_watch "$M3U_FILE" "$choice"
           rm -f "$M3U_FILE"
           break
+
         else
           echo "Skipping non-media: $choice" >&2
         fi
