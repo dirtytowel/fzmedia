@@ -158,10 +158,10 @@ plbuild() {
     && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
-# Prompt via fuzzy finder whether to add to the continue watching cache dir
+# Prompt via fuzzy finder whether to add to the add to continue watching cache dir
 cont_watch() {
-  ans=$( printf "continue watching\ndon't add\n" | $FUZZY_FINDER ) || return
-  [ "$ans" = "continue watching" ] && cp "$1" "$CACHE_DIR/${2%.*}.m3u"
+  ans=$( printf "add to continue watching\ndon't add\n" | $FUZZY_FINDER ) || return
+  [ "$ans" = "add to continue watching" ] && cp "$1" "$CACHE_DIR/${2%.*}.m3u"
 }
 
 manage_cache() {
