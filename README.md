@@ -86,7 +86,6 @@ continue watching
 ├── rm/
 │   ├── A.m3u
 │   ├── B.m3u
-│   ├── delete all
 │   └── ../
 ├── A.m3u
 ├── B.m3u
