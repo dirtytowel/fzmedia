@@ -26,7 +26,7 @@ the only thing this tool actually does is glue these preferences together.
 
 A config file at `~/.config/{user}/fzmedia/config` is created if the script is run and does not have a config file. I wrote it in a way that will add new commented out values if more config options are added later or if a variable name changed.
 
-```
+```bash
 # Where are we looking for media files? works with urls and local directories. This has to be set to something or you can just pass the -u flag.
 # the tool is kinda useless if you don't have a dir or http index you want to point to. 
 BASE_URL="/path/to/file or http://example.com"
