@@ -78,7 +78,7 @@ Usage: fzmedia [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
   -h  this help
 ```
 
-For example you could have the keybind `mod + f` set to `fzmedia -f "dmenu -S -i -l 10"` so that it opens in dmenu on the keybind. This gives the flexibility for when you want to use the tool in the terminal with a fuzzy finder such as `fzf` or `fzy`. You could have shows saved locally and not on my http index or want to use a different http index so you can override the default with `-u /path/to/dir` or `-u https://user:password@example.com`.
+For example you could have the keybind `mod + f` set to `fzmedia -f "dmenu -i -l 10"` so that it opens in dmenu on the keybind. This gives the flexibility for when you want to use the tool in the terminal with a fuzzy finder such as `fzf` or `fzy`. You could have shows saved locally and not on my http index or want to use a different http index so you can override the default with `-u /path/to/dir` or `-u https://user:password@example.com`.
 
 the continue watching queue only gets propogated after a user confirms that they want to add it after they play a file from the specified source. Here is an example tree of what navigating the continue watching section looks like:
 ```
