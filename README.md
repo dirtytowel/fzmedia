@@ -80,6 +80,25 @@ Usage: fzmedia [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
 
 For example you could have the keybind `mod + f` set to `fzmedia -f "dmenu -S -i -l 10"` so that it opens in dmenu on the keybind. This gives the flexibility for when you want to use the tool in the terminal with a fuzzy finder such as `fzf` or `fzy`. You could have shows saved locally and not on my http index or want to use a different http index so you can override the default with `-u /path/to/dir` or `-u https://user:password@example.com`.
 
+the continue watching queue only gets propogated after a user confirms that they want to add it after they play a file from the specified source. Here is an example tree of what navigating the continue watching section looks like:
+```
+continue watching
+├── rm/
+│   ├── A.m3u
+│   ├── B.m3u
+│   ├── delete all
+│   └── ../
+├── A.m3u
+├── B.m3u
+└── ../
+```
+
+when navigating directory trees in general, you can search in the fuzzy finder for a file or directory name, navigate back up a directory with a cancel command (ex: `ctrl + c`, `esc`) or the `../` selection. You have to escape all the way up the tree to the base dir to folly quit the tool if you decide you don't want to play something. It is pretty intuitive to navigate though so there shouldn't be any trouble there.
+
+# I found a bug/issue, what do I do?
+
+The best thing you can do if you find a bug is fork this repo, fix the bug, and issue a PR that I can review. That being said, opening a new issue in this gihub repo is the next best thing. Please be descriptive with your issue and how to reproduce it in both situations, and if you have issues a PR review please try to explain what you did to resolve the issue.
+
 # TODO
 - gentoo ebuild
 - selfhosted apt repository for debian and ubuntu
