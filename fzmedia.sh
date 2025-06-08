@@ -1,18 +1,18 @@
 #!/bin/sh
 
 # Parse CLI flags (override config)
-while getopts "u:p:r:f:m:h" opt; do
+while getopts "s:p:r:f:m:h" opt; do
   case "$opt" in
-    u) FLAG_BASE_URL=$OPTARG ;;
+    s) FLAG_MEDIA_ROOT=$OPTARG ;;
     p) FLAG_VIDEO_PLAYER=$OPTARG ;;
     r) FLAG_RESUME_PLAYER=$OPTARG ;;
     f) FLAG_FUZZY_FINDER=$OPTARG ;;
     m) FLAG_M3U_FILE=$OPTARG ;;
     h)
       cat <<EOF
-Usage: $(basename "$0") [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
+Usage: $(basename "$0") [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
 
-  -u  HTTP index root        (overrides BASE_URL in config)
+  -s  media root path        (directory or HTTP index, overrides MEDIA_ROOT)
   -p  video player command   (overrides VIDEO_PLAYER)
   -r  resume player command  (overrides RESUME_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
@@ -26,7 +26,7 @@ EOF
 done
 shift $((OPTIND - 1))
 
-# Load configuration, apply defaults, and ensure BASE_URL is set
+# Load configuration, apply defaults, and ensure MEDIA_ROOT is set
 sourceconf() {
   [ -z $XDG_CONFIG_HOME ] && local config_home="$HOME/.config" || config_home="$XDG_CONFIG_HOME"
   [ -z $XDG_CACHE_HOME ] && local cache_home="$HOME/.cache" || cache_home="$XDG_CACHE_HOME"
@@ -40,7 +40,7 @@ sourceconf() {
 
   # Define all VAR=default pairs once
   set -- \
-    "BASE_URL=" \
+    "MEDIA_ROOT=" \
     "VIDEO_PLAYER=mpv --save-position-on-quit --no-resume-playback" \
     "RESUME_PLAYER=mpv --save-position-on-quit" \
     "FUZZY_FINDER=fzy" \
@@ -58,9 +58,9 @@ sourceconf() {
   for each in "$@"; do
     var=${each%%=*}
     eval "val=\$$var"
-    # only BASE_URL gets a custom trailing comment; everything else uses “#default”
+    # only MEDIA_ROOT gets a custom trailing comment; everything else uses “#default”
     if ! grep -q -E "^[[:space:]]*#?[[:space:]]*$var=" "$config_file"; then
-      if [ "$var" = "BASE_URL" ]; then
+      if [ "$var" = "MEDIA_ROOT" ]; then
         printf '#%s="%s" #/path/to/file or http://example.com\n' \
           "$var" "$val" >> "$config_file"
       else
@@ -181,25 +181,25 @@ navigate_and_play() {
   while :; do
     choice=$(
       {
-        [ "${current%/}" = "${BASE_URL%/}" ] \
+        [ "${current%/}" = "${MEDIA_ROOT%/}" ] \
           && ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 \
           && printf 'continue watching/\n'
         list_entries "$current" | reorder
         [ "${current%/}" = "${CACHE_DIR%/}" ] && printf 'rm\n'
-        [ "${current%/}" != "${BASE_URL%/}" ] && printf '../\n'
+        [ "${current%/}" != "${MEDIA_ROOT%/}" ] && printf '../\n'
       } | $FUZZY_FINDER
     )
     status=$?
 
     # If fuzzy‐finder was cancelled (Esc/Ctrl-C):
-    #  • if at BASE_URL → exit
-    #  • if at CACHE_DIR → current=BASE_URL
+    #  • if at MEDIA_ROOT → exit
+    #  • if at CACHE_DIR → current=MEDIA_ROOT
     #  • otherwise → current=parent
     if [ "$status" -ne 0 ]; then
-      if [ "${current%/}" = "${BASE_URL%/}" ]; then
+      if [ "${current%/}" = "${MEDIA_ROOT%/}" ]; then
         exit
       elif [ "${current%/}" = "${CACHE_DIR%/}" ]; then
-        current="${BASE_URL%/}/"
+        current="${MEDIA_ROOT%/}/"
         continue
       else
         current="${current%/*/}/"
@@ -216,11 +216,11 @@ navigate_and_play() {
 
       "rm")
         manage_cache
-        # if CACHE_DIR is now empty of .m3u, reset to BASE_URL; otherwise stay in CACHE_DIR
-        [ ! -e "$CACHE_DIR"/*.m3u ] && current="${BASE_URL%/}/" || current="${CACHE_DIR%/}/"
+        # if CACHE_DIR is now empty of .m3u, reset to MEDIA_ROOT; otherwise stay in CACHE_DIR
+        [ ! -e "$CACHE_DIR"/*.m3u ] && current="${MEDIA_ROOT%/}/" || current="${CACHE_DIR%/}/"
         ;;
       ../)
-        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${BASE_URL%/}/" || current="${current%/*/}/"
+        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${MEDIA_ROOT%/}/" || current="${current%/*/}/"
         ;;
 
       */)
@@ -252,24 +252,24 @@ navigate_and_play() {
 main() {
   # Prevent running as root
   if [ "$(id -u)" -eq 0 ]; then
-    echo "Do not run this script as root. Aborting."
+    printf "Do not run this script as root. Aborting.\n"
     exit 1
   fi
 
   sourceconf  # load config
 
   # Apply CLI overrides
-  [ -n "$FLAG_BASE_URL" ]    && BASE_URL=$FLAG_BASE_URL
-  [ -n "$FLAG_VIDEO_PLAYER" ] && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
+  [ -n "$FLAG_MEDIA_ROOT" ]    && MEDIA_ROOT=$FLAG_MEDIA_ROOT
+  [ -n "$FLAG_VIDEO_PLAYER" ]  && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
   [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
-  [ -n "$FLAG_FUZZY_FINDER" ] && FUZZY_FINDER=$FLAG_FUZZY_FINDER
-  [ -n "$FLAG_M3U_FILE" ]     && M3U_FILE=$FLAG_M3U_FILE
+  [ -n "$FLAG_FUZZY_FINDER" ]  && FUZZY_FINDER=$FLAG_FUZZY_FINDER
+  [ -n "$FLAG_M3U_FILE" ]      && M3U_FILE=$FLAG_M3U_FILE
 
-  # If BASE_URL is still empty after sourcing/applying defaults, error out
-  [ -z "$BASE_URL" ] && echo "Error: BASE_URL must be set." >&2 && return 1
+  # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
+  [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
 
   # Start navigation/playback
-  navigate_and_play "${BASE_URL%/}/"
+  navigate_and_play "${MEDIA_ROOT%/}/"
 
 }
 

@@ -12,9 +12,9 @@ ebuild and apt repository coming soon tm
 
 All it does is pass the file dirs from a http index or local dir to a fuzzy finder of your choice, then pass the output chosen from the fuzzy finder to a media player of your choice
 
-`${DIRECTORY} -> ${FUZZY_FINDER} -> ${VIDEO_PLAYER}`
+`${MEDIA_ROOT} -> ${FUZZY_FINDER} -> ${VIDEO_PLAYER}`
 
-DIRECTORY: no default, needs to be set in config file or with -u {dir/url}
+MEDIA_ROOT: no default, needs to be set in config file or with -u {dir/url}
 
 FUZZY_FINDER: confirmed working with `dmenu`, `fzy`, and `fzf`. defaults to `fzy`. it just passes stdin to another app so it should work with whatever fuzzy finder you like.
 
@@ -29,7 +29,7 @@ A config file at `~/.config/{user}/fzmedia/config` is created if the script is r
 ```bash
 # Where are we looking for media files? works with urls and local directories. This has to be set to something or you can just pass the -u flag.
 # the tool is kinda useless if you don't have a dir or http index you want to point to. 
-BASE_URL="/path/to/file or http://example.com"
+MEDIA_ROOT="/path/to/file or http://example.com"
 
 # the default video player when playing a file when not under the continue
 # watching header. the mpv flags for this allow for saving the current position
@@ -68,9 +68,9 @@ PREFERRED_ORDER="movies/,tv/,anime/,music/" #default
 after the tool is installed in your $PATH you can call it with `fzmedia`. you can also pass the `-h` flag to print this help text to the terminal:
 
 ```
-Usage: fzmedia [-u BASE_URL] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
+Usage: fzmedia [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
 
-  -u  HTTP index root        (overrides BASE_URL in config)
+  -s  media root path        (directory or HTTP index, overrides MEDIA_ROOT)
   -p  video player command   (overrides VIDEO_PLAYER)
   -r  resume player command  (overrides RESUME_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
