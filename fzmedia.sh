@@ -133,7 +133,7 @@ MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
 plbuild() {
-  echo "#EXTM3U" > "$M3U_FILE"
+  printf "#EXTM3U\n" > "$M3U_FILE"
 
   list_entries "$1" \
     | grep -iE "$MEDIA_REGEX" \
@@ -241,7 +241,7 @@ navigate_and_play() {
           break
 
         else
-          echo "Skipping non-media: $choice" >&2
+          printf "skipping non-media: $choice\n" >&2
         fi
         ;;
     esac
