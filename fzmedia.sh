@@ -168,9 +168,15 @@ cont_watch() {
 
 manage_cache() {
   local sel
-  sel=$(find "$CACHE_DIR" -maxdepth 1 -name '*.m3u' -printf '%f\n' 2>/dev/null \
-    | $FUZZY_FINDER) || return
-  [ -n "$sel" ] && rm "$CACHE_DIR/$sel"
+  sel=$(
+    {
+      for i in $(ls "${CACHE_DIR}"/*.m3u); do basename $i; done
+      printf '../\n'
+    } | $FUZZY_FINDER
+  ) || return
+
+  [ "$sel" = "../" ] && return
+  [ -n "$sel" ] && rm -f "$CACHE_DIR/$sel"
 }
 
 # Navigate directories via fuzzy picker and play when reaching media files
