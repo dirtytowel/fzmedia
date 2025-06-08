@@ -96,7 +96,7 @@ when navigating directory trees in general, you can search in the fuzzy finder f
 
 # I found a bug/issue, what do I do?
 
-The best thing you can do if you find a bug is fork this repo, fix the bug, and issue a PR that I can review. That being said, opening a new issue in this gihub repo is the next best thing. Please be descriptive with your issue and how to reproduce it in both situations, and if you have issues a PR review please try to explain what you did to resolve the issue.
+The best thing you can do if you find a bug is fork this repo, fix the bug, and issue a PR that I can review or open a new issue in this github repo. Any and all contributions are greatly appreciated. The tool is still a work in progress but the hope is it will progressively get better as time goes on.
 
 # TODO
 - gentoo ebuild
