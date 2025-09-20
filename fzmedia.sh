@@ -134,6 +134,7 @@ MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
+
 plbuild() {
   printf "#EXTM3U\n" > "$M3U_FILE"
 
@@ -144,22 +145,13 @@ plbuild() {
         case "$1" in
           http://*|https://*)
             enc=$(printf '%s' "$file" | url_encode)
-            printf '%s%s\n' "$1" "$enc" >> "$M3U_FILE"
+            printf '%s/%s\n' "${1%/}" "$enc" >> "$M3U_FILE"
             ;;
           *)
-            printf '%s%s\n' "$1" "$file" >> "$M3U_FILE"
+            printf '%s/%s\n' "${1%/}" "$file" >> "$M3U_FILE"
             ;;
         esac
       done
-
-  # remove everything before the chosen file
-  if case "$1" in http://*|https://*) true;; *) false;; esac; then
-    pattern=$(printf '%s' "$FILE" | url_encode)
-  else
-    pattern="$FILE"
-  fi
-  sed "0,/$pattern/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" \
-    && mv "$M3U_FILE.tmp" "$M3U_FILE"
 }
 
 # Prompt via fuzzy finder whether to add to the add to continue watching cache dir
