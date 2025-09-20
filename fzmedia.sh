@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Parse CLI flags (override config)
-while getopts "s:p:r:f:m:h" opt; do
+while getopts "s:p:r:f:m:c:h" opt; do
   case "$opt" in
     s) FLAG_MEDIA_ROOT=$OPTARG ;;
     p) FLAG_VIDEO_PLAYER=$OPTARG ;;
@@ -18,7 +18,7 @@ Usage: $(basename "$0") [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m 
   -r  resume player command  (overrides RESUME_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
   -m  path to m3u file       (overrides M3U_FILE)
-  -c  path to cache dir      (overrides CACHE_FILE)
+  -c  path to cache dir      (overrides CACHE_DIR)
   -h  this help
 EOF
       exit 0
@@ -264,7 +264,7 @@ main() {
   [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
   [ -n "$FLAG_FUZZY_FINDER" ]  && FUZZY_FINDER=$FLAG_FUZZY_FINDER
   [ -n "$FLAG_M3U_FILE" ]      && M3U_FILE=$FLAG_M3U_FILE
-  [ -n "$FLAG_CACHE_FILE" ]    && CACHE_FILE=$FLAG_CACHE_FILE
+  [ -n "$FLAG_CACHE_DIR" ]    && CACHE_DIR=$FLAG_CACHE_DIR
 
   # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
   [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
