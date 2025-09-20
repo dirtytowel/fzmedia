@@ -99,6 +99,8 @@ when navigating directory trees in general, you can search in the fuzzy finder f
 The best thing you can do if you find a bug is fork this repo, fix the bug, and issue a PR that I can review or open a new issue in this github repo. Any and all contributions are greatly appreciated. The tool is still a work in progress but the hope is it will progressively get better as time goes on.
 
 # TODO
+- continue watching update on open and only update continue watching and do not open flag.
+- mpv supports streaming from ssh which would be cool to add as a media root
 - gentoo ebuild
 - selfhosted apt repository for debian and ubuntu
 - rename vars, flags, and config file vars so that they are more accurate, breaking change though so would probably be a major update for semver.
