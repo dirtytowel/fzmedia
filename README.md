@@ -40,8 +40,13 @@ VIDEO_PLAYER="mpv --save-position-on-quit --no-resume-playback" #default
 # the --no-resume-playback flag mpv flag is removed so that it does not restart your saved progress
 # it is worth noting that if you use vlc there are no such flags so they should both VIDEO_PLAYER and RESUME_PLAYER should be "vlc"
 # though vlc isn't very good for the continue watching feature when using m3u files which is what the the RESUME_PLAYER and VIDEO_PLAYER actually attempt to play
-# (there could be some sort of addon for vlc that adds something similar to the feature that mpv has but I am unaware of one if it exists), 
+# (there could be some sort of addon for vlc that adds something similar to the feature that mpv has but I am unaware of one if it exists),
 RESUME_PLAYER="mpv --save-position-on-quit" #default
+
+# the download tool to use when downloading a video instead of playing.  Must accept a file of URLs
+# -c, or --continue will finish partially downloaded files, useful for network interruptions
+# -i, or --input-file allows a file of URLs to be provided to download
+DOWNLOAD_TOOL="wget -c -i"
 
 # any fuzzy finder will do here. It is important to note there are two real types of fuzzy finders: basic fuzzy finders, and menu tools like dmenu/rofi
 # I have made the tool so that it works with both, at the caveat of not being able to give yes/no prompts or other script abilities like renaming the m3u's saved
@@ -75,6 +80,8 @@ Usage: fzmedia [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
   -r  resume player command  (overrides RESUME_PLAYER)
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
   -m  path to m3u file       (overrides M3U_FILE)
+  -d  download the video instead of play
+  -t  download tool          (overrides DOWNLOAD_TOOL)
   -h  this help
 ```
 
