@@ -239,6 +239,8 @@ navigate_and_play() {
       *)
         if printf '%s\n' "$choice" | grep -qiE '\.m3u$'; then
           if [ ! -z "$DOWNLOAD_MEDIA" ]; then
+              # Strip m3u control lines
+              sed -i '/^#/d' "$M3U_FILE"
               $DOWNLOAD_TOOL "$M3U_FILE"
           else
               $RESUME_PLAYER "${current}${choice}"
@@ -249,6 +251,8 @@ navigate_and_play() {
           FILE="$choice"
           plbuild "$current"
           if [ ! -z "$DOWNLOAD_MEDIA" ]; then
+              # Strip m3u control lines
+              sed -i '/^#/d' "$M3U_FILE"
               $DOWNLOAD_TOOL "$M3U_FILE"
           else
               $VIDEO_PLAYER "$M3U_FILE"
