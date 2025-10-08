@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Parse CLI flags (override config)
-while getopts "s:p:r:f:m:c:h" opt; do
+while getopts "s:p:r:f:m:c:hdt:" opt; do
   case "$opt" in
     s) FLAG_MEDIA_ROOT=$OPTARG ;;
     p) FLAG_VIDEO_PLAYER=$OPTARG ;;
@@ -9,6 +9,8 @@ while getopts "s:p:r:f:m:c:h" opt; do
     f) FLAG_FUZZY_FINDER=$OPTARG ;;
     m) FLAG_M3U_FILE=$OPTARG ;;
     c) FLAG_CACHE_DIR=$OPTARG ;;
+    d) DOWNLOAD_MEDIA="true" ;;
+    t) DOWNLOAD_TOOL=$OPTARG ;;
     h)
       cat <<EOF
 Usage: $(basename "$0") [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
@@ -19,6 +21,8 @@ Usage: $(basename "$0") [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m 
   -f  fuzzy-finder command   (overrides FUZZY_FINDER)
   -m  path to m3u file       (overrides M3U_FILE)
   -c  path to cache dir      (overrides CACHE_DIR)
+  -d  download the video instead of play
+  -t  download tool          (overrides DOWNLOAD_TOOL)
   -h  this help
 EOF
       exit 0
@@ -45,6 +49,7 @@ sourceconf() {
     "MEDIA_ROOT=" \
     "VIDEO_PLAYER=mpv --save-position-on-quit --no-resume-playback" \
     "RESUME_PLAYER=mpv --save-position-on-quit" \
+    "DOWNLOAD_TOOL=wget -c -i" \
     "FUZZY_FINDER=fzy" \
     "M3U_FILE=/tmp/fzmedia.m3u" \
     "PREFERRED_ORDER=movies/,tv/,anime/,music/" \
@@ -173,6 +178,10 @@ manage_cache() {
   [ -n "$sel" ] && rm -f "$CACHE_DIR/$sel"
 }
 
+# Parses a .m3u and downloads all files
+# download() {
+# }
+
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
   local current="${1%/}/"
@@ -229,13 +238,25 @@ navigate_and_play() {
 
       *)
         if printf '%s\n' "$choice" | grep -qiE '\.m3u$'; then
-          $RESUME_PLAYER "${current}${choice}"
+          if [ ! -z "$DOWNLOAD_MEDIA" ]; then
+              # Strip m3u control lines
+              sed -i '/^#/d' "$M3U_FILE"
+              $DOWNLOAD_TOOL "$M3U_FILE"
+          else
+              $RESUME_PLAYER "${current}${choice}"
+          fi
           break
 
         elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
-          $VIDEO_PLAYER "$M3U_FILE"
+          if [ ! -z "$DOWNLOAD_MEDIA" ]; then
+              # Strip m3u control lines
+              sed -i '/^#/d' "$M3U_FILE"
+              $DOWNLOAD_TOOL "$M3U_FILE"
+          else
+              $VIDEO_PLAYER "$M3U_FILE"
+          fi
           cont_watch "$M3U_FILE" "$choice"
           rm -f "$M3U_FILE"
           break
