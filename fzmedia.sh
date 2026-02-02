@@ -135,7 +135,7 @@ poll_m3u_files() {
     parent=$(basename "$f")
     sed '/^#EXTINF/d; s#/[^/]*$##' "$f" | sort -u |
     while IFS= read -r i; do
-      printf "" > "$CACHE_DIR/$parent"
+      printf "#EXTM3U\n" > "$CACHE_DIR/$parent"
       for entry in $(list_entries "$i/"); do
         printf '#EXTINF:-1,\n' >> "$CACHE_DIR/$parent"
         printf '%s\n' "$i/$entry" >> "$CACHE_DIR/$parent"
@@ -155,32 +155,16 @@ MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 # Build an M3U playlist from a URL/directory, starting from first selected file
 
 plbuild() {
-  printf "#EXTM3U\n" > "$M3U_FILE"
-
-  list_entries "$1" \
-    | grep -iE "$MEDIA_REGEX" \
-    | while IFS= read -r file; do
-        printf '#EXTINF:-1,\n' >> "$M3U_FILE"
-        case "$1" in
-          http://*|https://*)
-            enc=$(printf '%s' "$file" | url_encode)
-            printf '%s/%s\n' "${1%/}" "$enc" >> "$M3U_FILE"
-            ;;
-          *)
-            printf '%s/%s\n' "${1%/}" "$file" >> "$M3U_FILE"
-            ;;
-        esac
-      done
-
-  # remove everything before the chosen file
-  if case "$1" in http://*|https://*) true;; *) false;; esac; then
-    pattern=$(printf '%s' "$FILE" | url_encode)
-  else
-    pattern="$FILE"
-  fi
-  sed "0,/$pattern/{//!d;}" "$M3U_FILE" > "$M3U_FILE.tmp" \
-    && mv "$M3U_FILE.tmp" "$M3U_FILE"
-
+  printf '#M3UEXT\n' > "$M3U_FILE"
+  for entry in $(list_entries "$1" | grep -iE "$MEDIA_REGEX"); do
+    printf '#EXTINF:-1,\n' >> "$M3U_FILE"
+    case "$entry" in
+      http://*|https://*)
+        entry=$(printf '%s' "$entry" | url_encode)
+        ;;
+    esac
+    printf '%s\n' "$1$entry" >> "$M3U_FILE"
+  done
 }
 
 # Prompt via fuzzy finder whether to add to the add to continue watching cache dir
