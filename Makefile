@@ -1,5 +1,5 @@
 PREFIX = /usr/local
 install:
-	cp fzmedia.sh ${DESTDIR}${PREFIX}/bin/fzmedia
+	cp fzmedia.sh ${PREFIX}/bin/fzmedia
 uninstall:
-	rm -f ${DESTDIR}${PREFIX}/bin/fzmedia\
+	rm -f ${PREFIX}/bin/fzmedia\
