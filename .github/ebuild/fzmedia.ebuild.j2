@@ -1,0 +1,33 @@
+EAPI=8
+
+DESCRIPTION="Just a shitty shell script to navigate file trees, play media files, and continue watching where you left off later."
+HOMEPAGE="https://github.com/dirtytowel/fzmedia"
+
+{% if version == "9999" %}
+inherit git-r3
+EGIT_REPO_URI="https://github.com/dirtytowel/fzmedia.git"
+{% else %}
+SRC_URI="https://github.com/dirtytowel/fzmedia/archive/refs/tags/v{{ version }}.tar.gz -> fzmedia-{{ version }}.tar.gz"
+S="${WORKDIR}/fzmedia-{{ version }}"
+KEYWORDS="~amd64 ~arm64"
+{% endif %}
+
+LICENSE="MIT"
+SLOT="0"
+
+IUSE="+fzy +mpv +wget"
+
+RDEPEND="
+	dev-lang/python
+	fzy? ( app-text/fzy )
+	mpv? ( media-video/mpv )
+	wget? ( net-misc/wget )
+"
+
+src_compile() { :; }
+
+src_install() {
+	dodir /usr/bin
+	emake PREFIX="${D}${EPREFIX}/usr" install
+	einstalldocs
+}

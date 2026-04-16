@@ -1,0 +1,38 @@
+name: Update gentoo ebuild
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'README.md'
+      - 'Makefile'
+      - '.gitignore'
+      - '.github/**'
+
+jobs:
+  update_ebuild_if_changed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: dirtytowel/garbage-overlay
+          token: ${{ secrets.PAT_TOKEN }}
+          ref: master
+          path: overlay
+
+      - run: pip install jinja2 -q
+
+      - name: render and push if changed
+        run: |
+          python3 -c "import jinja2,sys; print(jinja2.Template(open(sys.argv[1]).read()).render(version=sys.argv[2]))" .github/ebuild/fzmedia.ebuild.j2 9999 > overlay/media-video/fzmedia/fzmedia-9999.ebuild
+          cd overlay
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet && exit 0
+          git commit -m "update ebuild for media-video/fzmedia-9999"
+          git push

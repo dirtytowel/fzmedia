@@ -1,0 +1,45 @@
+name: Release gentoo ebuild
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g. v1.2.3)'
+        required: true
+
+jobs:
+  release_ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: dirtytowel/garbage-overlay
+          token: ${{ secrets.PAT_TOKEN }}
+          ref: master
+          path: overlay
+
+      - run: pip install jinja2-cli -q
+
+      - name: render ebuild, generate manifest, push if changed
+        run: |
+
+          VERSION="$(echo '${{ github.event.inputs.tag || github.ref_name }}' | sed 's/^v//')"
+
+          jinja2 .github/ebuild/fzmedia.ebuild.j2 -D version=$VERSION > overlay/media-video/fzmedia/fzmedia-${VERSION}.ebuild
+
+          f=/tmp/fzmedia-${VERSION}.tar.gz
+          curl -fsSL "https://github.com/dirtytowel/fzmedia/archive/refs/tags/v${VERSION}.tar.gz" -o $f
+          echo "DIST fzmedia-${VERSION}.tar.gz $(wc -c < $f | xargs) BLAKE2B $(b2sum $f | awk '{print $1}') SHA512 $(sha512sum $f | awk '{print $1}')" >> overlay/media-video/fzmedia/Manifest
+
+          cd overlay
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet && exit 0
+          git commit -m "add ebuild for media-video/fzmedia-${VERSION}"
+          git push
