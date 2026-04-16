@@ -131,6 +131,7 @@ list_entries() {
 }
 
 poll_m3u_files() {
+  ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 || return
   for f in "$CACHE_DIR"/*; do
     parent=$(basename "$f")
     sed '/^#EXTINF/d; s#/[^/]*$##' "$f" | sort -u |
