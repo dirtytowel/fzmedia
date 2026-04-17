@@ -33,7 +33,7 @@ done
 shift $((OPTIND - 1))
 
 # Load configuration, apply defaults, and ensure MEDIA_ROOT is set
-sourceconf() {
+conf() {
   [ -z $XDG_CONFIG_HOME ] && local config_home="$HOME/.config" || config_home="$XDG_CONFIG_HOME"
   [ -z $XDG_CACHE_HOME ] && local cache_home="$HOME/.cache" || cache_home="$XDG_CACHE_HOME"
   local config_dir="$config_home/fzmedia"
@@ -76,6 +76,17 @@ sourceconf() {
       fi
     fi
   done
+
+  # Apply CLI overrides
+  [ -n "$FLAG_MEDIA_ROOT" ]    && MEDIA_ROOT=$FLAG_MEDIA_ROOT
+  [ -n "$FLAG_VIDEO_PLAYER" ]  && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
+  [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
+  [ -n "$FLAG_FUZZY_FINDER" ]  && FUZZY_FINDER=$FLAG_FUZZY_FINDER
+  [ -n "$FLAG_M3U_FILE" ]      && M3U_FILE=$FLAG_M3U_FILE
+  [ -n "$FLAG_CACHE_DIR" ]    && CACHE_DIR=$FLAG_CACHE_DIR
+
+  # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
+  [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
 
 }
 
@@ -210,9 +221,9 @@ navigate_and_play() {
     status=$?
 
     # If fuzzy‐finder was cancelled (Esc/Ctrl-C):
-    #  • if at MEDIA_ROOT → exit
-    #  • if at CACHE_DIR → current=MEDIA_ROOT
-    #  • otherwise → current=parent
+    # if at MEDIA_ROOT > exit
+    # if at CACHE_DIR > current=MEDIA_ROOT
+    # otherwise > current=parent
     if [ "$status" -ne 0 ]; then
       if [ "${current%/}" = "${MEDIA_ROOT%/}" ]; then
         exit
@@ -278,33 +289,11 @@ navigate_and_play() {
   done
 }
 
-# Entry point
 main() {
-  # Prevent running as root
-  if [ "$(id -u)" -eq 0 ]; then
-    printf "Do not run this script as root. Aborting.\n"
-    exit 1
-  fi
-
-  sourceconf  # load config
-
-  # Apply CLI overrides
-  [ -n "$FLAG_MEDIA_ROOT" ]    && MEDIA_ROOT=$FLAG_MEDIA_ROOT
-  [ -n "$FLAG_VIDEO_PLAYER" ]  && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
-  [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
-  [ -n "$FLAG_FUZZY_FINDER" ]  && FUZZY_FINDER=$FLAG_FUZZY_FINDER
-  [ -n "$FLAG_M3U_FILE" ]      && M3U_FILE=$FLAG_M3U_FILE
-  [ -n "$FLAG_CACHE_DIR" ]    && CACHE_DIR=$FLAG_CACHE_DIR
-
-  # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
-  [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
-
+  [ "$(id -u)" -eq 0 ] && printf "Do not run this script as root. Aborting.\n" && exit 1
+  conf
   poll_m3u_files
-
-  # Start navigation/playback
   navigate_and_play "${MEDIA_ROOT%/}/"
-
 }
 
 main
-
