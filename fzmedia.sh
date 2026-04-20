@@ -156,10 +156,6 @@ poll_m3u_files() {
   done
 }
 
-# List and fuzzy‐select directory entries under a given URL
-indexfzy() {
-  list_entries "$1" | $FUZZY_FINDER
-}
 # supported media extensions
 MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.m4a|.gif|'
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
