@@ -195,9 +195,16 @@ manage_cache() {
   [ -n "$sel" ] && rm -f "$CACHE_DIR/$sel"
 }
 
-# Parses a .m3u and downloads all files
-# download() {
-# }
+play_or_download() {
+  player=$1
+  media=$2
+  if [ -n "$DOWNLOAD_MEDIA" ]; then
+    sed -i '/^#/d' "$M3U_FILE"
+    $DOWNLOAD_TOOL "$M3U_FILE"
+  else
+    $player $media
+  fi
+}
 
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
@@ -255,25 +262,13 @@ navigate_and_play() {
 
       *)
         if printf '%s\n' "$choice" | grep -qiE '\.m3u$'; then
-          if [ ! -z "$DOWNLOAD_MEDIA" ]; then
-              # Strip m3u control lines
-              sed -i '/^#/d' "$M3U_FILE"
-              $DOWNLOAD_TOOL "$M3U_FILE"
-          else
-              $RESUME_PLAYER "${current}${choice}"
-          fi
+          play_or_download "$RESUME_PLAYER" "${current}${choice}"
           break
 
         elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
-          if [ ! -z "$DOWNLOAD_MEDIA" ]; then
-              # Strip m3u control lines
-              sed -i '/^#/d' "$M3U_FILE"
-              $DOWNLOAD_TOOL "$M3U_FILE"
-          else
-              $VIDEO_PLAYER "$M3U_FILE"
-          fi
+          play_or_download "$VIDEO_PLAYER" "$M3U_FILE"
           cont_watch "$M3U_FILE" "$choice"
           rm -f "$M3U_FILE"
           break
