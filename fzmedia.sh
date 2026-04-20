@@ -224,10 +224,7 @@ navigate_and_play() {
     )
     status=$?
 
-    # If fuzzy‐finder was cancelled (Esc/Ctrl-C):
-    # if at MEDIA_ROOT > exit
-    # if at CACHE_DIR > current=MEDIA_ROOT
-    # otherwise > current=parent
+    # fuzzy finder exit logic (Esc/Ctrl-C)
     if [ "$status" -ne 0 ]; then
       if [ "${current%/}" = "${MEDIA_ROOT%/}" ]; then
         exit
