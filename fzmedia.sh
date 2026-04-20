@@ -162,7 +162,6 @@ MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.
 MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
-
 plbuild() {
   printf '#M3UEXT\n' > "$M3U_FILE"
   for entry in $(list_entries "$1" | grep -iE "$MEDIA_REGEX"); do
@@ -208,34 +207,31 @@ play_or_download() {
 
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
-  local current="${1%/}/"
+  #normalize MEDIA_ROOT, CACHE_DIR at beginning here so leter code is more readable
+  local root="${MEDIA_ROOT%/}/"
+  local cache="${CACHE_DIR%/}/"
+  local current="$root"
   local choice
 
   while :; do
 
     choice=$(
       {
-        [ "${current%/}" = "${MEDIA_ROOT%/}" ] \
+        [ "$current" = "$root" ] \
           && ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 \
           && printf 'continue watching/\n'
         list_entries "$current" | reorder
-        [ "${current%/}" = "${CACHE_DIR%/}" ] && printf 'rm\n'
-        [ "${current%/}" != "${MEDIA_ROOT%/}" ] && printf '../\n'
+        [ "$current" = "$cache" ] && printf 'rm\n'
+        [ "$current" != "$root" ] && printf '../\n'
       } | $FUZZY_FINDER
     )
     status=$?
 
     # fuzzy finder exit logic (Esc/Ctrl-C)
     if [ "$status" -ne 0 ]; then
-      if [ "${current%/}" = "${MEDIA_ROOT%/}" ]; then
-        exit
-      elif [ "${current%/}" = "${CACHE_DIR%/}" ]; then
-        current="${MEDIA_ROOT%/}/"
-        continue
-      else
-        current="${current%/*/}/"
-        continue
-      fi
+      [ "$current" = "$root" ] && exit
+      [ "$current" = "$cache" ] && current="$root" || current="${current%/*/}/"
+      continue
     fi
 
     [ -z "$choice" ] && exit
@@ -243,26 +239,22 @@ navigate_and_play() {
     case "$choice" in
 
       "continue watching/")
-        current="${CACHE_DIR%/}/"
+        current="$cache"
         ;;
-
 
       "rm")
         manage_cache
         # if CACHE_DIR is now empty of .m3u, reset to MEDIA_ROOT; otherwise stay in CACHE_DIR
-        ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 && current="${CACHE_DIR%/}/" || current="${MEDIA_ROOT%/}/"
+        ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 && current="$cache" || current="$root"
         ;;
-
 
       ../)
-        [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${MEDIA_ROOT%/}/" || current="${current%/*/}/"
+        [ "$current" = "$cache" ] && current="$root" || current="${current%/*/}/"
         ;;
-
 
       */)
         current="${current}${choice}"
         ;;
-
 
       *)
         #if current choice is a .m3u then resume
@@ -272,7 +264,6 @@ navigate_and_play() {
 
         #play and prompt to add to continue watching if is one of the supported media types
         elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
-          FILE="$choice"
           plbuild "$current"
           play_or_download "$VIDEO_PLAYER" "$M3U_FILE"
           cont_watch "$M3U_FILE" "$choice"
@@ -293,7 +284,7 @@ main() {
   [ "$(id -u)" -eq 0 ] && printf "Do not run this script as root. Aborting.\n" && exit 1
   conf
   poll_m3u_files
-  navigate_and_play "${MEDIA_ROOT%/}/"
+  navigate_and_play
 }
 
 main
