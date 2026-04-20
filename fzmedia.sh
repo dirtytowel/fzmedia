@@ -212,6 +212,7 @@ navigate_and_play() {
   local choice
 
   while :; do
+
     choice=$(
       {
         [ "${current%/}" = "${MEDIA_ROOT%/}" ] \
@@ -240,28 +241,36 @@ navigate_and_play() {
     [ -z "$choice" ] && exit
 
     case "$choice" in
+
       "continue watching/")
         current="${CACHE_DIR%/}/"
         ;;
+
 
       "rm")
         manage_cache
         # if CACHE_DIR is now empty of .m3u, reset to MEDIA_ROOT; otherwise stay in CACHE_DIR
         ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 && current="${CACHE_DIR%/}/" || current="${MEDIA_ROOT%/}/"
         ;;
+
+
       ../)
         [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${MEDIA_ROOT%/}/" || current="${current%/*/}/"
         ;;
+
 
       */)
         current="${current}${choice}"
         ;;
 
+
       *)
+        #if current choice is a .m3u then resume
         if printf '%s\n' "$choice" | grep -qiE '\.m3u$'; then
           play_or_download "$RESUME_PLAYER" "${current}${choice}"
           break
 
+        #play and prompt to add to continue watching if is one of the supported media types
         elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
           FILE="$choice"
           plbuild "$current"
@@ -274,6 +283,8 @@ navigate_and_play() {
           printf "skipping non-media: $choice\n" >&2
         fi
         ;;
+
+
     esac
   done
 }
