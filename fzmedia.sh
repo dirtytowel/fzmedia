@@ -247,7 +247,7 @@ navigate_and_play() {
       "rm")
         manage_cache
         # if CACHE_DIR is now empty of .m3u, reset to MEDIA_ROOT; otherwise stay in CACHE_DIR
-        [ ! -e "$CACHE_DIR"/*.m3u ] && current="${MEDIA_ROOT%/}/" || current="${CACHE_DIR%/}/"
+        ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 && current="${CACHE_DIR%/}/" || current="${MEDIA_ROOT%/}/"
         ;;
       ../)
         [ "${current%/}" = "${CACHE_DIR%/}" ] && current="${MEDIA_ROOT%/}/" || current="${current%/*/}/"
