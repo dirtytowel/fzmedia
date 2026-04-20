@@ -143,11 +143,12 @@ list_entries() {
 
 poll_m3u_files() {
   ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 || return
-  for f in "$CACHE_DIR"/*; do
+  for f in "$CACHE_DIR"/*.m3u; do
     parent=$(basename "$f")
-    sed '/^#EXTINF/d; s#/[^/]*$##' "$f" | sort -u |
-    while IFS= read -r i; do
-      printf "#EXTM3U\n" > "$CACHE_DIR/$parent"
+    dirs=$(sed '/^#EXTINF/d; s#/[^/]*$##' "$f" | sort -u)
+    [ -z "$dirs" ] && continue
+    printf "#EXTM3U\n" > "$CACHE_DIR/$parent"
+    printf '%s\n' "$dirs" | while IFS= read -r i; do
       for entry in $(list_entries "$i/"); do
         printf '#EXTINF:-1,\n' >> "$CACHE_DIR/$parent"
         printf '%s\n' "$i/$entry" >> "$CACHE_DIR/$parent"
