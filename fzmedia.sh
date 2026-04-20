@@ -34,14 +34,15 @@ shift $((OPTIND - 1))
 
 # Load configuration, apply defaults, and ensure MEDIA_ROOT is set
 conf() {
-  [ -z $XDG_CONFIG_HOME ] && local config_home="$HOME/.config" || config_home="$XDG_CONFIG_HOME"
-  [ -z $XDG_CACHE_HOME ] && local cache_home="$HOME/.cache" || cache_home="$XDG_CACHE_HOME"
-  local config_dir="$config_home/fzmedia"
-  local config_file="$config_dir/config"
+  [ -z "$XDG_CONFIG_HOME" ] && config_home="$HOME/.config" || config_home="$XDG_CONFIG_HOME"
+  [ -z "$XDG_CACHE_HOME" ] && cache_home="$HOME/.cache" || cache_home="$XDG_CACHE_HOME"
+  config_dir="$config_home/fzmedia"
+  config_file="$config_dir/config"
 
   # Ensure the config directory exists and create the file if it doesn't
   mkdir -p "$config_dir"
   touch "$config_file"
+  # shellcheck disable=SC1090
   . "$config_file"
 
   # Define all VAR=default pairs once
@@ -64,6 +65,7 @@ conf() {
   # Append any missing VAR lines (commented or not) to the end of the config file
   for each in "$@"; do
     var=${each%%=*}
+    val=
     eval "val=\$$var"
     # only MEDIA_ROOT gets a custom trailing comment; everything else uses “#default”
     if ! grep -q -E "^[[:space:]]*#?[[:space:]]*$var=" "$config_file"; then
@@ -182,10 +184,9 @@ cont_watch() {
 }
 
 manage_cache() {
-  local sel
   sel=$(
     {
-      for i in $(ls "${CACHE_DIR}"/*.m3u); do basename $i; done
+      for i in "$CACHE_DIR"/*.m3u; do [ -e "$i" ] && basename "$i"; done
       printf '../\n'
     } | $FUZZY_FINDER
   ) || return
@@ -201,6 +202,7 @@ play_or_download() {
     sed -i '/^#/d' "$M3U_FILE"
     $DOWNLOAD_TOOL "$M3U_FILE"
   else
+    # shellcheck disable=SC2086
     $player $media
   fi
 }
@@ -208,10 +210,9 @@ play_or_download() {
 # Navigate directories via fuzzy picker and play when reaching media files
 navigate_and_play() {
   #normalize MEDIA_ROOT, CACHE_DIR at beginning here so leter code is more readable
-  local root="${MEDIA_ROOT%/}/"
-  local cache="${CACHE_DIR%/}/"
-  local current="$root"
-  local choice
+  root="${MEDIA_ROOT%/}/"
+  cache="${CACHE_DIR%/}/"
+  current="$root"
 
   while :; do
 
@@ -271,7 +272,7 @@ navigate_and_play() {
           break
 
         else
-          printf "skipping non-media: $choice\n" >&2
+          printf 'skipping non-media: %s\n' "$choice" >&2
         fi
         ;;
 
