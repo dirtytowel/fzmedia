@@ -12,7 +12,7 @@ while getopts "s:p:r:f:m:c:hdt:" opt; do
     d) DOWNLOAD_MEDIA="true" ;;
     t) DOWNLOAD_TOOL=$OPTARG ;;
     h)
-      cat <<EOF
+      cat << EOF
 Usage: $(basename "$0") [-s MEDIA_ROOT] [-p VIDEO_PLAYER] [-f FUZZY_FINDER] [-m M3U_FILE]
 
   -s  media root path        (directory or HTTP index, overrides MEDIA_ROOT)
@@ -80,18 +80,17 @@ conf() {
   done
 
   # Apply CLI overrides
-  [ -n "$FLAG_MEDIA_ROOT" ]    && MEDIA_ROOT=$FLAG_MEDIA_ROOT
-  [ -n "$FLAG_VIDEO_PLAYER" ]  && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
+  [ -n "$FLAG_MEDIA_ROOT" ] && MEDIA_ROOT=$FLAG_MEDIA_ROOT
+  [ -n "$FLAG_VIDEO_PLAYER" ] && VIDEO_PLAYER=$FLAG_VIDEO_PLAYER
   [ -n "$FLAG_RESUME_PLAYER" ] && RESUME_PLAYER=$FLAG_RESUME_PLAYER
-  [ -n "$FLAG_FUZZY_FINDER" ]  && FUZZY_FINDER=$FLAG_FUZZY_FINDER
-  [ -n "$FLAG_M3U_FILE" ]      && M3U_FILE=$FLAG_M3U_FILE
-  [ -n "$FLAG_CACHE_DIR" ]    && CACHE_DIR=$FLAG_CACHE_DIR
+  [ -n "$FLAG_FUZZY_FINDER" ] && FUZZY_FINDER=$FLAG_FUZZY_FINDER
+  [ -n "$FLAG_M3U_FILE" ] && M3U_FILE=$FLAG_M3U_FILE
+  [ -n "$FLAG_CACHE_DIR" ] && CACHE_DIR=$FLAG_CACHE_DIR
 
   # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
   [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
 
 }
-
 
 # URL-encode stdin lines (safe='/')
 url_encode() {
@@ -122,29 +121,29 @@ reorder() {
   {
     p = ($0 in prio ? prio[$0] : n+1)
     print p "\t" $0
-  }' \
-  | sort -k1,1n \
-  | cut -f2
+  }' |
+    sort -k1,1n |
+    cut -f2
 }
 
 list_entries() {
   case "$1" in
-    http://*|https://*)
-      wget -q -O - "$1" \
-        | grep -oP '(?<=href=")[^"]*' \
-        | sed '1d' \
-        | url_decode
+    http://* | https://*)
+      wget -q -O - "$1" |
+        grep -oP '(?<=href=")[^"]*' |
+        sed '1d' |
+        url_decode
       ;;
     *)
       # assume $1 is a directory on disk (with or without trailing slash)
       dir="${1%/}"
-      ( cd "$dir" 2>/dev/null && ls -1p )
+      (cd "$dir" 2> /dev/null && ls -1p)
       ;;
   esac
 }
 
 poll_m3u_files() {
-  ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 || return
+  ls "$CACHE_DIR"/*.m3u > /dev/null 2>&1 || return
   for f in "$CACHE_DIR"/*.m3u; do
     parent=$(basename "$f")
     dirs=$(sed '/^#EXTINF/d; s#/[^/]*$##' "$f" | sort -u)
@@ -169,7 +168,7 @@ plbuild() {
   for entry in $(list_entries "$1" | grep -iE "$MEDIA_REGEX"); do
     printf '#EXTINF:-1,\n' >> "$M3U_FILE"
     case "$entry" in
-      http://*|https://*)
+      http://* | https://*)
         entry=$(printf '%s' "$entry" | url_encode)
         ;;
     esac
@@ -179,7 +178,7 @@ plbuild() {
 
 # Prompt via fuzzy finder whether to add to the add to continue watching cache dir
 cont_watch() {
-  ans=$( printf "don't add to continue watching\nadd to continue watching\n" | $FUZZY_FINDER ) || return
+  ans=$(printf "don't add to continue watching\nadd to continue watching\n" | $FUZZY_FINDER) || return
   [ "$ans" = "add to continue watching" ] && cp "$1" "$CACHE_DIR/${2%.*}.m3u"
 }
 
@@ -218,9 +217,9 @@ navigate_and_play() {
 
     choice=$(
       {
-        [ "$current" = "$root" ] \
-          && ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 \
-          && printf 'continue watching/\n'
+        [ "$current" = "$root" ] &&
+          ls "$CACHE_DIR"/*.m3u > /dev/null 2>&1 &&
+          printf 'continue watching/\n'
         list_entries "$current" | reorder
         [ "$current" = "$cache" ] && printf 'rm\n'
         [ "$current" != "$root" ] && printf '../\n'
@@ -246,7 +245,7 @@ navigate_and_play() {
       "rm")
         manage_cache
         # if CACHE_DIR is now empty of .m3u, reset to MEDIA_ROOT; otherwise stay in CACHE_DIR
-        ls "$CACHE_DIR"/*.m3u >/dev/null 2>&1 && current="$cache" || current="$root"
+        ls "$CACHE_DIR"/*.m3u > /dev/null 2>&1 && current="$cache" || current="$root"
         ;;
 
       ../)
@@ -275,7 +274,6 @@ navigate_and_play() {
           printf 'skipping non-media: %s\n' "$choice" >&2
         fi
         ;;
-
 
     esac
   done
