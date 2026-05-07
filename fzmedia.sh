@@ -107,9 +107,32 @@ url_decode() {
   python3 -c '
 import sys, urllib.parse as ul
 print("\n".join(
-    ul.unquote_plus(line.strip())
+    ul.unquote(line.strip())
     for line in sys.stdin
 ))'
+}
+
+html_hrefs() {
+  python3 -c '
+import sys
+from html.parser import HTMLParser
+from html import unescape
+class P(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        if tag.lower()!="a": return
+        for k,v in attrs:
+            if k.lower()=="href" and v is not None:
+                print(unescape(v)); return
+P().feed(sys.stdin.read())'
+}
+
+filter_hrefs() {
+  while IFS= read -r href; do
+    case "$href" in
+      '' | '../' | './' | '#'* | '?'* | *'#'* | *'?'* | http://* | https://* | mailto:* | javascript:*) continue ;;
+    esac
+    printf '%s\n' "$href"
+  done
 }
 
 reorder() {
@@ -130,8 +153,8 @@ list_entries() {
   case "$1" in
     http://* | https://*)
       wget -q -O - "$1" |
-        sed -n 's/.*href="\([^"]*\)".*/\1/p' |
-        sed '1d' |
+        html_hrefs |
+        filter_hrefs |
         url_decode
       ;;
     *)
