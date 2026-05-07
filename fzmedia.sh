@@ -88,7 +88,7 @@ conf() {
   [ -n "$FLAG_CACHE_DIR" ] && CACHE_DIR=$FLAG_CACHE_DIR
 
   # If MEDIA_ROOT is still empty after sourcing/applying defaults, error out
-  [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && return 1
+  [ -z "$MEDIA_ROOT" ] && printf "Error: MEDIA_ROOT must be set.\n" >&2 && exit 1
 
 }
 
