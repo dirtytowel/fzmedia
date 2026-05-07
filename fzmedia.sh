@@ -182,8 +182,7 @@ poll_m3u_files() {
 }
 
 # supported media extensions
-MEDIA_EXT='|.mkv|.mp4|.avi|.webm|.flv|.mov|.wmv|.m4v|.mp3|.flac|.wav|.aac|.ogg|.m4a|.gif|'
-MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
+MEDIA_REGEX='\.(mkv|mp4|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a|gif)$'
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
 plbuild() {
