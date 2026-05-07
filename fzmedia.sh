@@ -130,7 +130,7 @@ list_entries() {
   case "$1" in
     http://* | https://*)
       wget -q -O - "$1" |
-        grep -oP '(?<=href=")[^"]*' |
+        sed -n 's/.*href="\([^"]*\)".*/\1/p' |
         sed '1d' |
         url_decode
       ;;
@@ -198,7 +198,8 @@ play_or_download() {
   player=$1
   media=$2
   if [ -n "$DOWNLOAD_MEDIA" ]; then
-    sed -i '/^#/d' "$M3U_FILE"
+    sed '/^#/d' "$M3U_FILE" > "$M3U_FILE.tmp" &&
+      mv "$M3U_FILE.tmp" "$M3U_FILE"
     $DOWNLOAD_TOOL "$M3U_FILE"
   else
     # shellcheck disable=SC2086
