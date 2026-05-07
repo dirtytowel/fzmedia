@@ -150,7 +150,7 @@ poll_m3u_files() {
     [ -z "$dirs" ] && continue
     printf "#EXTM3U\n" > "$CACHE_DIR/$parent"
     printf '%s\n' "$dirs" | while IFS= read -r i; do
-      for entry in $(list_entries "$i/"); do
+      list_entries "$i/" | while IFS= read -r entry; do
         printf '#EXTINF:-1,\n' >> "$CACHE_DIR/$parent"
         printf '%s\n' "$i/$entry" >> "$CACHE_DIR/$parent"
       done
@@ -165,7 +165,7 @@ MEDIA_REGEX="\.\($(printf '%s' "$MEDIA_EXT")\)\$"
 # Build an M3U playlist from a URL/directory, starting from first selected file
 plbuild() {
   printf '#M3UEXT\n' > "$M3U_FILE"
-  for entry in $(list_entries "$1" | grep -iE "$MEDIA_REGEX"); do
+  list_entries "$1" | grep -iE "$MEDIA_REGEX" | while IFS= read -r entry; do
     printf '#EXTINF:-1,\n' >> "$M3U_FILE"
     case "$entry" in
       http://* | https://*)
