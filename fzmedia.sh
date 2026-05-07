@@ -163,15 +163,18 @@ MEDIA_REGEX='\.(mkv|mp4|avi|webm|flv|mov|wmv|m4v|mp3|flac|wav|aac|ogg|m4a|gif)$'
 
 # Build an M3U playlist from a URL/directory, starting from first selected file
 plbuild() {
+  start=$2
   printf '#M3UEXT\n' > "$M3U_FILE"
+  case "$1" in
+    http://* | https://*) base="$1" ;;
+    *) base=$(cd "${1%/}" 2> /dev/null && pwd)/ || return ;;
+  esac
   list_entries "$1" | grep -iE "$MEDIA_REGEX" | while IFS= read -r entry; do
+    [ -n "$start" ] && [ "$entry" != "$start" ] && continue
+    start=
     printf '#EXTINF:-1,\n' >> "$M3U_FILE"
-    case "$entry" in
-      http://* | https://*)
-        entry=$(printf '%s' "$entry" | url_encode)
-        ;;
-    esac
-    printf '%s\n' "$1$entry" >> "$M3U_FILE"
+    case "$base" in http://* | https://*) entry=$(printf '%s' "$entry" | url_encode) ;; esac
+    printf '%s\n' "$base$entry" >> "$M3U_FILE"
   done
 }
 
@@ -264,7 +267,7 @@ navigate_and_play() {
 
         #play and prompt to add to continue watching if is one of the supported media types
         elif printf '%s\n' "$choice" | grep -qiE "$MEDIA_REGEX"; then
-          plbuild "$current"
+          plbuild "$current" "$choice"
           play_or_download "$VIDEO_PLAYER" "$M3U_FILE"
           cont_watch "$M3U_FILE" "$choice"
           rm -f "$M3U_FILE"
