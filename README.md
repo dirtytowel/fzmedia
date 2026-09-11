@@ -95,3 +95,5 @@ open an issue or PR if you find a bug or want to contribute. all contributions w
 - ssh as a media root source
 - selfhosted apt repository for debian and ubuntu
 - maybe a config file option and flag to specify whether you are using a menu or plain fuzzy finder. this could really level up the "UI" capabilities, such as renaming Continue watching m3u files or cleaner prompts, though I don't want to break compat with plain fuzzy finders
+- add download path to continue watching feature when -d is passed
+- download entire dir option in fuzzy finder when using -d
