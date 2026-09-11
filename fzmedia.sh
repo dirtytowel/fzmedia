@@ -230,8 +230,8 @@ play_or_download() {
       mv "$M3U_FILE.tmp" "$M3U_FILE"
     $DOWNLOAD_TOOL "$M3U_FILE"
   else
-    # shellcheck disable=SC2086
-    $player $media
+    set -- $player
+    "$@" "$media"
   fi
 }
 
