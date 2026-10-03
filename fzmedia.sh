@@ -132,7 +132,7 @@ list_entries() {
   case "$1" in
     http://* | https://*)
       wget -q -O - "$1" |
-        sed -n 's/.*href="\([^"]*\)".*/\1/p' |
+        LC_ALL=C sed -n 's/.*href="\([^"]*\)".*/\1/p' |
         sed '1d' |
         url_decode
       ;;
